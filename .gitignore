@@ -1,0 +1,66 @@
+# Arquivo .gitignore para o projeto "Super Gestão"
+# Este arquivo lista os arquivos e pastas que o Git não deve rastrear.
+
+### Geral ###
+# Arquivos de ambiente local. Nunca devem ser versionados.
+.env
+.env.local
+.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache de SO e arquivos temporários
+.DS_Store
+Thumbs.db
+
+### Configurações de IDEs (conforme nosso documento) ###
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Visual Studio Code
+.vscode/
+
+### Backend: Java / Spring Boot / Gradle ###
+# Arquivos gerados pelo Gradle
+.gradle/
+build/
+
+# Arquivos de classe compilados
+*.class
+
+# Arquivos de pacote (JARs, WARs)
+*.jar
+*.war
+
+# Logs de debug do Maven/Gradle (caso use)
+hs_err_pid*
+
+### Frontend: Angular / Node.js ###
+# Dependências do Node.js (sempre instaladas via 'npm install')
+node_modules/
+
+# Arquivos de build e saída do Angular
+dist/
+.angular/
+
+# Arquivos de cache do npm/yarn
+npm-cache/
+.npm/
+
+# Arquivos de configuração específicos do editor
+/src/environments/environment.prod.ts
+# Nota: Às vezes 'environment.ts' é versionado com defaults, e o 'prod'
+# é gerado no pipeline de CI/CD. Para agora, vamos ignorar o de produção.
+
+# Relatórios de cobertura de testes
+coverage/
+
+# Arquivos de log do Angular
+*.log

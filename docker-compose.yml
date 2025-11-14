@@ -1,0 +1,174 @@
+# Inicia a definição de todos os serviços que o Docker Compose irá gerenciar.
+services:
+
+  # --- BANCO DE DADOS (Obrigatório) ---
+  database:
+    # Imagem oficial do PostgreSQL, versão 17, otimizada (alpine).
+    image: postgres:17-alpine
+    # Nome amigável para o container.
+    container_name: vet-db
+    # Configurações de ambiente para o container do Postgres.
+    environment:
+      # Define o usuário do banco. O valor virá do arquivo .env.
+      - POSTGRES_USER=${DB_USER}
+      # Define a senha do banco. O valor virá do arquivo .env.
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      # Define o nome do banco de dados a ser criado. O valor virá do .env.
+      - POSTGRES_DB=${DB_NAME}
+    # Mapeia um volume nomeado (postgres_data) para a pasta de dados do Postgres.
+    # Isso garante que seus dados sobrevivam se o container for recriado.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Mapeia a porta 5432 da sua máquina (host) para a porta 5432 do container.
+    ports:
+      - "5432:5432"
+    # Verificação de saúde: Garante que outros serviços só iniciem APÓS
+    # o banco de dados estar realmente pronto para aceitar conexões.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- CACHE (Opcional, mas no nosso plano) ---
+  redis:
+    # Imagem oficial do Redis, versão 7, otimizada (alpine).
+    image: redis:7-alpine
+    container_name: vet-redis
+    # Mapeia a porta padrão do Redis (6379) para o host.
+    ports:
+      - "6379:6379"
+    # Persiste os dados do cache em um volume nomeado.
+    volumes:
+      - redis_data:/data
+    # Verificação de saúde: Testa se o servidor Redis está respondendo.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- ARMAZENAMENTO DE ARQUIVOS (Opcional, mas no nosso plano) ---
+  minio:
+    # Imagem oficial do Minio (compatível com API S3).
+    image: minio/minio:latest
+    container_name: vet-minio
+    environment:
+      # Define o usuário root. O valor virá do .env.
+      - MINIO_ROOT_USER=${MINIO_USER}
+      # Define a senha root. O valor virá do .env.
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+    # Mapeia as portas do Minio:
+    # 9000: Porta da API (para onde o Spring Boot vai se conectar).
+    # 9001: Porta do Console Web (UI de gerenciamento).
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    # Persiste os arquivos ("buckets" e "objects") em um volume nomeado.
+    volumes:
+      - minio_data:/data
+    # Comando para iniciar o servidor Minio e habilitar o console na porta 9001.
+    command: server /data --console-address ":9001"
+    # Verificação de saúde: Testa se o servidor Minio está pronto.
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- MENSAGERIA (Obrigatório para o trabalho) ---
+  rabbitmq:
+    # Imagem do RabbitMQ com a UI de gerenciamento incluída (tag -management).
+    image: rabbitmq:3.13-management-alpine
+    container_name: vet-rabbitmq
+    ports:
+      # 5672: Porta do protocolo AMQP (para o Spring Boot se conectar).
+      - "5672:5672"
+      # 15672: Porta da UI de gerenciamento (acesse via http://localhost:15672).
+      - "15672:15672"
+    environment:
+      # Usuário e senha padrão. Para dev, 'guest' é suficiente.
+      # Em produção, use variáveis do .env.
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    healthcheck:
+      # Testa se o broker do RabbitMQ está rodando.
+      test: ["CMD", "rabbitmq-diagnostics", "check_running", "-q"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- BACKEND 1 (API Principal / Produtor RabbitMQ) ---
+  backend-api:
+    # Constrói a imagem usando o Dockerfile localizado na pasta ./backend-api/
+    build: ./backend-api/
+    container_name: vet-backend-api
+    # Variáveis de ambiente injetadas no container do Spring Boot.
+    # O Spring Boot (com Spring Data) usará isso para se conectar.
+    # Note que os HOSTs são os nomes dos serviços (ex: 'database', 'redis').
+    environment:
+      # Configuração do Banco de Dados
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      # Configuração do Redis
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      # Configuração do RabbitMQ
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      # Configuração do Minio (exemplo, ajuste no application.properties)
+      - MINIO_URL=http://minio:9000
+      - MINIO_USER=${MINIO_USER}
+      - MINIO_PASSWORD=${MINIO_PASSWORD}
+    # Mapeia a porta 8080 do host para a porta 8080 do container (onde o Spring roda).
+    ports:
+      - "8080:8080"
+    # Garante que este serviço só suba DEPOIS que suas dependências
+    # (banco, cache, mensageria) estiverem saudáveis (healthy).
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # --- BACKEND 2 (Serviço de Notificação / Consumidor RabbitMQ) ---
+  notification-service:
+    # Constrói a imagem usando o Dockerfile da pasta ./notification-service/
+    build: ./notification-service/
+    container_name: vet-notification-service
+    environment:
+      # Este serviço só precisa se conectar ao RabbitMQ.
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    # Mapeia para uma porta DIFERENTE no host (ex: 8081) para não haver conflito.
+    ports:
+      - "8081:8081"
+    # Só precisa esperar o RabbitMQ estar pronto.
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # --- FRONTEND (Angular / Nginx) ---
+  frontend:
+    # Constrói a imagem do frontend (que usa Nginx) a partir da pasta indicada.
+    build: ./frontend/ # <-- AJUSTE REALIZADO AQUI
+    container_name: vet-frontend
+    ports:
+      # Mapeia a porta 4200 (padrão de dev Angular) do host
+      # para a porta 80 do container (onde o Nginx escuta).
+      - "4200:80"
+    # O frontend depende que o backend-api esteja "iniciado",
+    # mas não precisa que esteja "healthy" para o Nginx servir os arquivos HTML/JS.
+    depends_on:
+      - backend-api
+
+# --- VOLUMES NOMEADOS ---
+# Declara os volumes nomeados que usamos acima. O Docker gerencia
+# esses volumes para garantir a persistência dos dados.
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
