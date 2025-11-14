@@ -46,7 +46,6 @@ Siga os passos abaixo para subir toda a aplicação (Frontend, Backends, Banco d
 
 ### 2. Clonar o Repositório
 
-```bash
 git clone [https://github.com/francisco-neto26/CatDogClinicaVeterinaria.git](https://github.com/francisco-neto26/CatDogClinicaVeterinaria.git)
 cd CatDogClinicaVeterinaria
 
