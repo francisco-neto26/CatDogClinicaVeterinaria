@@ -73,8 +73,6 @@ Este arquivo é obrigatório e armazena as senhas e configurações que o docker
 
 Na raiz do projeto (onde está o docker-compose.yml), execute:
 
-```bash
-
 docker-compose up --build
 --build: Força o Docker a (re)construir as imagens dos seus serviços (backend-api, notification-service, frontend) na primeira vez ou se você fizer alterações no código.
 
@@ -84,7 +82,7 @@ Aguarde alguns minutos até que todos os containers estejam de pé e saudáveis 
 ---
 
 
-🖥️ Acessando os Serviços
+### 🖥️ Acessando os Serviços
 
 Após a execução, os seguintes serviços estarão disponíveis no seu localhost:
 
@@ -103,26 +101,26 @@ Banco: clinicavetdb
 Usuário: admin
 Senha: admin
 
-📂 Arquitetura e Fluxo de Mensageria
+### 📂 Arquitetura e Fluxo de Mensageria
 
 Para uma explicação detalhada sobre a estrutura de pastas, as responsabilidades de cada serviço e o fluxo de dados completo do RabbitMQ, consulte nosso guia de arquitetura:
 
 ➡️ Ver Arquivo de Estrutura (ESTRUTURA.md)
 
-🐳 Comandos Úteis do Docker Compose
+### 🐳 Comandos Úteis do Docker Compose
 
-Parar e remover os containers:
+**Parar e remover os containers:**
 docker-compose down
 
-Parar e remover containers E volumes (use isso para "resetar" seu banco de dados):
+**Parar e remover containers E volumes (use isso para "resetar" seu banco de dados):**
 docker-compose down -v
 
-Ver os logs de todos os serviços:
+**Ver os logs de todos os serviços:**
 docker-compose logs -f
 
-Ver os logs de um serviço específico (ex: backend-api):
+**Ver os logs de um serviço específico (ex: backend-api):**
 docker-compose logs -f backend-api
 
-Reconstruir as imagens sem cache (útil se o build estiver "preso"):
+**Reconstruir as imagens sem cache (útil se o build estiver "preso"):**
 docker-compose build --no-cache
 
