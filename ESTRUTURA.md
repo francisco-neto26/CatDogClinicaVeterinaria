@@ -6,6 +6,7 @@ Este documento detalha a estrutura interna do projeto `CatDogClinicaVet`, as res
 
 O projeto utiliza uma abordagem de monorepo, onde múltiplos serviços (backends, frontend) residem no mesmo repositório:
 
+
 /CatDogClinicaVeterinaria
 │
 ├── backend-api/
