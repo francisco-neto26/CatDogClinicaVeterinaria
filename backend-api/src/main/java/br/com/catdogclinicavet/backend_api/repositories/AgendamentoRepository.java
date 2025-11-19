@@ -1,6 +1,8 @@
 package br.com.catdogclinicavet.backend_api.repositories;
 
 import br.com.catdogclinicavet.backend_api.models.Agendamento;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,9 +11,9 @@ import java.util.List;
 @Repository
 public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> {
 
-    List<Agendamento> findByClienteId(Long clienteId);
+    Page<Agendamento> findByClienteId(Long clienteId, Pageable pageable);
 
-    List<Agendamento> findByFuncionarioId(Long funcionarioId);
+    Page<Agendamento> findByFuncionarioId(Long funcionarioId, Pageable pageable);
 
-    List<Agendamento> findByAnimalId(Long animalId);
+    Page<Agendamento> findByAnimalId(Long animalId, Pageable pageable);
 }

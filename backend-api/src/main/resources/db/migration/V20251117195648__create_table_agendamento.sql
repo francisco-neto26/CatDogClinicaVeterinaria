@@ -6,7 +6,7 @@ CREATE TABLE agendamentos (
     animal_id BIGINT NOT NULL,
     status VARCHAR(50) NOT NULL CHECK (status IN (
                                                 'AGENDADO',
-                                                'CONCLUÍDO',
+                                                'CONCLUIDO',
                                                 'CANCELADO'
       )),
     CONSTRAINT fk_agendamento_usuario

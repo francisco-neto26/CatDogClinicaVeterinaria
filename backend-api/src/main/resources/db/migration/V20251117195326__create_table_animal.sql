@@ -4,7 +4,7 @@ CREATE TABLE animal (
     raca VARCHAR(100),
     data_nascimento DATE,
     especie VARCHAR(50) NOT NULL,
-    sexo VARCHAR(10) NOT NULL CHECK (sexo IN ('MACHO', 'FÊMEA')),
+    sexo VARCHAR(10) NOT NULL CHECK (sexo IN ('MACHO', 'FEMEA')),
     cor_pelagem VARCHAR(50),
     foto_url VARCHAR(255),
     usuario_id BIGINT NOT NULL,
