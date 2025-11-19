@@ -32,4 +32,11 @@ public class AuthController {
         UsuarioResponseDTO response = authService.register(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @PostMapping("/register-employee")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('FUNCIONARIO')")
+    public ResponseEntity<UsuarioResponseDTO> registerEmployee(@Valid @RequestBody br.com.catdogclinicavet.backend_api.dto.auth.EmployeeRegisterRequestDTO dto) {
+        UsuarioResponseDTO response = authService.registerEmployee(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 }

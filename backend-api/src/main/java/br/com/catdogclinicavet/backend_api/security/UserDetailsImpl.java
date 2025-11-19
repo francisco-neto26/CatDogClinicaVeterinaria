@@ -26,7 +26,14 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(Usuario usuario) {
-        GrantedAuthority authority = new SimpleGrantedAuthority(usuario.getRole().getNome());
+        // --- CORREÇÃO AQUI: Adicionamos o prefixo "ROLE_" ---
+        // O Spring Security exige esse prefixo para o método hasRole() funcionar.
+        String roleName = usuario.getRole().getNome();
+        if (!roleName.startsWith("ROLE_")) {
+            roleName = "ROLE_" + roleName;
+        }
+
+        GrantedAuthority authority = new SimpleGrantedAuthority(roleName);
 
         return new UserDetailsImpl(
                 usuario.getId(),
@@ -56,24 +63,16 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public boolean isAccountNonLocked() { return true; }
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+    public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 
     @Override
     public boolean equals(Object o) {

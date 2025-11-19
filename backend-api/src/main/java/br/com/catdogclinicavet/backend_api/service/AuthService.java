@@ -16,7 +16,11 @@ import br.com.catdogclinicavet.backend_api.repositories.RoleRepository;
 import br.com.catdogclinicavet.backend_api.repositories.UsuarioRepository;
 import br.com.catdogclinicavet.backend_api.security.UserDetailsImpl;
 import br.com.catdogclinicavet.backend_api.security.service.TokenService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,6 +54,15 @@ public class AuthService {
     @Autowired
     private UsuarioMapper usuarioMapper;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Value("${app.rabbitmq.queue.registration}")
+    private String registrationQueue;
+
     @Transactional
     public UsuarioResponseDTO register(RegisterRequestDTO dto) {
         if (usuarioRepository.existsByEmail(dto.email())) {
@@ -73,6 +86,52 @@ public class AuthService {
         novoUsuario.setSenha(hashedPassword);
         novoUsuario.setPessoa(pessoaSalva);
         novoUsuario.setRole(clienteRole);
+
+        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+
+        try {
+            String message = objectMapper.writeValueAsString(usuarioMapper.toResponseDTO(usuarioSalvo));
+            rabbitTemplate.convertAndSend(registrationQueue, message);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return usuarioMapper.toResponseDTO(usuarioSalvo);
+    }
+
+    @Transactional
+    public UsuarioResponseDTO registerEmployee(br.com.catdogclinicavet.backend_api.dto.auth.EmployeeRegisterRequestDTO dto) {
+        if (usuarioRepository.existsByEmail(dto.email())) {
+            throw new DuplicateResourceException("Error: Email is already in use!");
+        }
+
+        if (dto.cpfcnpj() != null && !dto.cpfcnpj().isEmpty() && pessoaRepository.existsByCpfcnpj(dto.cpfcnpj())) {
+            throw new DuplicateResourceException("Error: CPF/CNPJ is already in use!");
+        }
+
+        Role role = roleRepository.findByNome(dto.role().toUpperCase())
+                .orElseThrow(() -> new ResourceNotFoundException("Error: Role '" + dto.role() + "' not found."));
+
+        Pessoa novaPessoa = new Pessoa();
+        novaPessoa.setNome(dto.nome());
+        novaPessoa.setTelefone(dto.telefone());
+        novaPessoa.setCpfcnpj(dto.cpfcnpj());
+        novaPessoa.setLogradouro(dto.logradouro());
+        novaPessoa.setNumero(dto.numero());
+        novaPessoa.setBairro(dto.bairro());
+        novaPessoa.setCidade(dto.cidade());
+        novaPessoa.setUf(dto.uf());
+        novaPessoa.setCep(dto.cep());
+
+        Pessoa pessoaSalva = pessoaRepository.save(novaPessoa);
+
+        String hashedPassword = passwordEncoder.encode(dto.senha());
+
+        Usuario novoUsuario = new Usuario();
+        novoUsuario.setEmail(dto.email());
+        novoUsuario.setSenha(hashedPassword);
+        novoUsuario.setPessoa(pessoaSalva);
+        novoUsuario.setRole(role);
 
         Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
 
