@@ -29,7 +29,7 @@ public class ItemServicoService {
     @Autowired
     private ItemServicoMapper itemServicoMapper;
 
-    @Cacheable(value = "itens-servicos", key = "'all'") 
+    @Cacheable(value = "itens-servicos", key = "'all'")
     public List<ItemServicoResponseDTO> findAll() {
         return itemServicoRepository.findAll().stream()
                 .map(itemServicoMapper::toResponseDTO)

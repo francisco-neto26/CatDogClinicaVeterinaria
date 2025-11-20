@@ -1,0 +1,11 @@
+.dashboard-container {    
+    background-color: var(--surface-hover); 
+    min-height: calc(100vh - 60px);
+    padding-top: 2rem; 
+}
+
+p-card {
+    .p-card-body {
+        padding: 2rem;
+    }
+}

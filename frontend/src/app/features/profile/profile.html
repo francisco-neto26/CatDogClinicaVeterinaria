@@ -1,0 +1,87 @@
+<div class="grid justify-content-center p-4">
+    <div class="col-12 md:col-8 lg:col-6">
+        <p-card header="Meu Perfil" styleClass="shadow-4">
+            
+            <div class="flex flex-column align-items-center mb-5">
+                <div class="relative">
+                    <p-avatar 
+                        [image]="currentPhotoUrl || ''" 
+                        [icon]="!currentPhotoUrl ? 'pi pi-user' : ''" 
+                        size="xlarge" 
+                        shape="circle" 
+                        [style]="{'width':'120px', 'height':'120px', 'font-size': '3rem'}"
+                        class="mb-3 surface-200">
+                    </p-avatar>
+                    
+                    <button 
+                        type="button" 
+                        class="absolute bottom-0 right-0 p-button-rounded p-button-icon-only" 
+                        style="bottom: 10px; right: 0;"
+                        (click)="fileInput.click()">
+                        <i class="pi pi-camera text-white bg-primary border-circle p-2 cursor-pointer shadow-2"></i>
+                    </button>
+                    <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)" accept="image/*">
+                </div>
+                <span class="text-500 text-sm">Clique na câmera para alterar</span>
+            </div>
+
+            <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+                <div class="grid formgrid">
+                    <div class="col-12 mb-3">
+                        <label class="font-bold block mb-2">Nome Completo</label>
+                        <input pInputText formControlName="nome" class="w-full" />
+                    </div>
+                    
+                    <div class="col-12 md:col-6 mb-3">
+                        <label class="font-bold block mb-2">E-mail</label>
+                        <input pInputText formControlName="email" class="w-full" />
+                    </div>
+
+                    <div class="col-12 md:col-6 mb-3">
+                        <label class="font-bold block mb-2">Telefone</label>
+                        <p-inputmask mask="(99) 99999-9999" formControlName="telefone" class="w-full" styleClass="w-full" />
+                    </div>
+
+                    <div class="col-12 md:col-4 mb-3">
+                        <label class="font-bold block mb-2">CEP</label>
+                        <p-inputmask mask="99999-999" formControlName="cep" class="w-full" styleClass="w-full" />
+                    </div>
+
+                    <div class="col-12 md:col-8 mb-3">
+                        <label class="font-bold block mb-2">Logradouro</label>
+                        <input pInputText formControlName="logradouro" class="w-full" />
+                    </div>
+
+                    <div class="col-12 md:col-4 mb-3">
+                        <label class="font-bold block mb-2">Número</label>
+                        <input pInputText formControlName="numero" class="w-full" />
+                    </div>
+
+                    <div class="col-12 md:col-8 mb-3">
+                        <label class="font-bold block mb-2">Bairro</label>
+                        <input pInputText formControlName="bairro" class="w-full" />
+                    </div>
+
+                    <div class="col-12 md:col-8 mb-3">
+                        <label class="font-bold block mb-2">Cidade</label>
+                        <input pInputText formControlName="cidade" class="w-full" />
+                    </div>
+
+                    <div class="col-12 md:col-4 mb-3">
+                        <label class="font-bold block mb-2">UF</label>
+                        <input pInputText formControlName="uf" class="w-full" maxlength="2" />
+                    </div>
+                </div>
+
+                <div class="flex justify-content-end mt-4">
+                    <p-button 
+                        label="Salvar Alterações" 
+                        icon="pi pi-check" 
+                        type="submit" 
+                        [loading]="loading"
+                        [disabled]="profileForm.invalid" />
+                </div>
+            </form>
+        </p-card>
+    </div>
+</div>

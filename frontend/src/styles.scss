@@ -1,5 +1,20 @@
+@import "primeicons/primeicons.css";
+@import "primeflex/primeflex.css";
+@import "styles/variables";
+@import "styles/base";
 
-// Você pode adicionar seus estilos globais aqui
-body {
-  font-family: var(--font-family);
+.p-inputtext {
+    width: 100%;
+}
+
+.p-toast {
+    z-index: 9999 !important;
+}
+
+.auth-background {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/assets/images/bg-auth.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
