@@ -24,23 +24,17 @@ public class StorageService {
 
     public void initBucket() {
         try {
-            // Verifica se o bucket existe
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-
-            // Se não existir, cria
             if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             }
 
-            // Força a política pública (mesmo que o bucket já existisse)
             setPublicPolicy(bucketName);
 
-            // Tenta subir a imagem padrão se ela não existir
             String imageName = "bg-auth.jpg";
             try {
                 minioClient.statObject(StatObjectArgs.builder().bucket(bucketName).object(imageName).build());
             } catch (Exception e) {
-                // Se der erro no statObject, o objeto não existe. Vamos criar.
                 ClassPathResource imgFile = new ClassPathResource("static/" + imageName);
                 if (imgFile.exists()) {
                     try (InputStream is = imgFile.getInputStream()) {
@@ -55,7 +49,6 @@ public class StorageService {
                     }
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -80,18 +73,13 @@ public class StorageService {
             minioClient.setBucketPolicy(
                     SetBucketPolicyArgs.builder().bucket(bucket).config(policy).build()
             );
-
-            System.out.println(">>> SUCESSO: Bucket '" + bucket + "' agora é PÚBLICO (Via Java) <<<");
-
         } catch (Exception e) {
-            System.err.println(">>> ERRO ao tentar definir política pública: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public String uploadFile(MultipartFile file) {
         try {
-
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
@@ -100,10 +88,8 @@ public class StorageService {
 
             String safeName = file.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_");
             String fileName = UUID.randomUUID() + "_" + safeName;
-
             InputStream inputStream = file.getInputStream();
 
-            // Faz o upload
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
@@ -117,6 +103,20 @@ public class StorageService {
 
         } catch (Exception e) {
             throw new RuntimeException("Error uploading file to Minio", e);
+        }
+    }
+
+    public void deleteFile(String fileName) {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            );
+        } catch (Exception e) {
+            // Logamos o erro mas não paramos o sistema, pois é apenas uma limpeza
+            System.err.println("Erro ao tentar deletar arquivo do Minio: " + e.getMessage());
         }
     }
 }

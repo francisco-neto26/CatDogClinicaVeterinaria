@@ -65,7 +65,6 @@ public class UsuarioService {
             throw new DuplicateResourceException("CPF/CNPJ já está em uso.");
         }
 
-        // AJUSTE AQUI: Usa a string direta. O toUpperCase() ajuda a evitar erros de caixa.
         Role role = roleRepository.findByNome(dto.role().toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Role não encontrada: " + dto.role()));
 
@@ -121,6 +120,16 @@ public class UsuarioService {
 
         Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+
+        if (usuario.getFotoUrl() != null && !usuario.getFotoUrl().isBlank()) {
+            try {
+                String oldUrl = usuario.getFotoUrl();
+                String oldFileName = oldUrl.substring(oldUrl.lastIndexOf("/") + 1);
+                storageService.deleteFile(oldFileName);
+            } catch (Exception e) {
+                System.err.println("Falha ao limpar foto antiga: " + e.getMessage());
+            }
+        }
 
         String fotoUrl = storageService.uploadFile(file);
         usuario.setFotoUrl(fotoUrl);
