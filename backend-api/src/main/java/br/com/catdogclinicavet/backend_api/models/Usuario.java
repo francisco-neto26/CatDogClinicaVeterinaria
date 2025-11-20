@@ -43,6 +43,9 @@ public class Usuario implements Serializable {
     @OneToMany(mappedBy = "cliente")
     private List<Conta> contas = new ArrayList<>();
 
+    @Column(name = "foto_url")
+    private String fotoUrl;
+
     public Usuario() {
     }
 
@@ -99,6 +102,14 @@ public class Usuario implements Serializable {
 
     public void setAnimais(List<Animal> animais) {
         this.animais = animais;
+    }
+
+    public String getFotoUrl() {
+        return fotoUrl;
+    }
+
+    public void setFotoUrl(String fotoUrl) {
+        this.fotoUrl = fotoUrl;
     }
 
     public List<Agendamento> getAgendamentosComoCliente() {

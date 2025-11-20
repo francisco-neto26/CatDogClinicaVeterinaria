@@ -34,6 +34,8 @@ public class TokenService {
                 .setIssuer("CatDogClinicaVet-API")
                 .setSubject(userDetails.getUsername())
                 .claim("id", userDetails.getId())
+                .claim("name", userDetails.getNome())
+                .claim("fotoUrl", userDetails.getFotoUrl())
                 .claim("role", userDetails.getAuthorities().iterator().next().getAuthority())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiration))

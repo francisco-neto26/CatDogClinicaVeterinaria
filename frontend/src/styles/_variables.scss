@@ -1,0 +1,20 @@
+:root {
+  /* --- Paleta da Marca (CatDog Clínica) --- */
+  --primary-color: #3B82F6;       /* Azul Principal */
+  --primary-color-text: #ffffff;  /* Texto no botão primário */
+  --secondary-color: #10B981;     /* Verde (Sucesso/Saúde) */
+  
+  --surface-ground: #eff3f8;      /* Fundo da página (cinza bem claro) */
+  --surface-card: #ffffff;        /* Fundo dos cartões/modais */
+  --text-color: #374151;          /* Texto principal (cinza escuro) */
+  --text-color-secondary: #6b7280; /* Texto secundário */
+
+  /* --- Ajustes Globais --- */
+  --border-radius: 8px;           /* Cantos arredondados padrão */
+  --font-family: 'Inter', sans-serif;
+}
+
+/* Sobrescrevendo variáveis específicas do PrimeNG se necessário */
+body {
+    --p-primary-color: var(--primary-color);
+}
