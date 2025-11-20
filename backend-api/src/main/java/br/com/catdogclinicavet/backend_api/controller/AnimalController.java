@@ -2,6 +2,7 @@ package br.com.catdogclinicavet.backend_api.controller;
 
 import br.com.catdogclinicavet.backend_api.dto.request.AnimalRequestDTO;
 import br.com.catdogclinicavet.backend_api.dto.response.AnimalResponseDTO;
+import br.com.catdogclinicavet.backend_api.security.AppRoles; // <--- IMPORTANTE
 import br.com.catdogclinicavet.backend_api.service.AnimalService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class AnimalController {
     private AnimalService animalService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize(AppRoles.ACESSO_ANIMAIS)
     public ResponseEntity<AnimalResponseDTO> createAnimal(
             @Valid @RequestPart("animal") AnimalRequestDTO dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto) {
@@ -32,21 +33,21 @@ public class AnimalController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize(AppRoles.ACESSO_ANIMAIS)
     public ResponseEntity<Page<AnimalResponseDTO>> findAllAnimals(@PageableDefault(size = 10) Pageable pageable) {
         Page<AnimalResponseDTO> animais = animalService.findAllAnimals(pageable);
         return ResponseEntity.ok(animais);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize(AppRoles.ACESSO_ANIMAIS)
     public ResponseEntity<AnimalResponseDTO> findAnimalById(@PathVariable Long id) {
         AnimalResponseDTO animal = animalService.findAnimalById(id);
         return ResponseEntity.ok(animal);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize(AppRoles.ACESSO_ANIMAIS)
     public ResponseEntity<AnimalResponseDTO> updateAnimal(
             @PathVariable Long id,
             @Valid @RequestPart("animal") AnimalRequestDTO dto,
@@ -57,7 +58,7 @@ public class AnimalController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize(AppRoles.ACESSO_ANIMAIS)
     public void deleteAnimal(@PathVariable Long id) {
         animalService.deleteAnimal(id);
     }

@@ -2,6 +2,7 @@ package br.com.catdogclinicavet.backend_api.controller;
 
 import br.com.catdogclinicavet.backend_api.dto.request.ContaItemRequestDTO;
 import br.com.catdogclinicavet.backend_api.dto.response.ContaResponseDTO;
+import br.com.catdogclinicavet.backend_api.security.AppRoles;
 import br.com.catdogclinicavet.backend_api.service.ContaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,8 @@ public class ContaController {
     @Autowired
     private ContaService contaService;
 
-    @PostMapping("/abrir/{agendamentoId}")
-    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'MEDICO VETERINARIO')")
+    @PostMapping("/interno/abrir/{agendamentoId}")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<ContaResponseDTO> abrirConta(@PathVariable Long agendamentoId) {
         return ResponseEntity.status(HttpStatus.CREATED).body(contaService.abrirConta(agendamentoId));
     }
@@ -29,20 +30,20 @@ public class ContaController {
         return ResponseEntity.ok(contaService.findById(id));
     }
 
-    @PostMapping("/{id}/itens")
-    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'MEDICO VETERINARIO')")
+    @PostMapping("/interno/{id}/itens")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<ContaResponseDTO> adicionarItem(@PathVariable Long id, @Valid @RequestBody ContaItemRequestDTO dto) {
         return ResponseEntity.ok(contaService.adicionarItem(id, dto));
     }
 
-    @DeleteMapping("/{id}/itens/{itemId}")
-    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'MEDICO VETERINARIO')")
+    @DeleteMapping("/interno/{id}/itens/{itemId}")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<ContaResponseDTO> removerItem(@PathVariable Long id, @PathVariable Long itemId) {
         return ResponseEntity.ok(contaService.removerItem(id, itemId));
     }
 
-    @PostMapping("/{id}/fechar")
-    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'MEDICO VETERINARIO')")
+    @PostMapping("/interno/{id}/fechar")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<ContaResponseDTO> fecharConta(@PathVariable Long id) {
         return ResponseEntity.ok(contaService.fecharConta(id));
     }

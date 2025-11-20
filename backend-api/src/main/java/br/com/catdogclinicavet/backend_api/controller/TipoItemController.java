@@ -2,6 +2,7 @@ package br.com.catdogclinicavet.backend_api.controller;
 
 import br.com.catdogclinicavet.backend_api.dto.request.TipoItemRequestDTO;
 import br.com.catdogclinicavet.backend_api.dto.response.TipoItemResponseDTO;
+import br.com.catdogclinicavet.backend_api.security.AppRoles;
 import br.com.catdogclinicavet.backend_api.service.TipoItemService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,21 +32,21 @@ public class TipoItemController {
         return ResponseEntity.ok(tipoItemService.findById(id));
     }
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'MEDICO VETERINARIO')")
+    @PostMapping("/interno")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<TipoItemResponseDTO> create(@Valid @RequestBody TipoItemRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(tipoItemService.create(dto));
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'MEDICO VETERINARIO')")
+    @PutMapping("/interno/{id}")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<TipoItemResponseDTO> update(@PathVariable Long id, @Valid @RequestBody TipoItemRequestDTO dto) {
         return ResponseEntity.ok(tipoItemService.update(id, dto));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/interno/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'MEDICO VETERINARIO')")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public void delete(@PathVariable Long id) {
         tipoItemService.delete(id);
     }

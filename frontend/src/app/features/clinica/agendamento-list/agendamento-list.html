@@ -1,0 +1,98 @@
+<div class="surface-ground px-4 py-5 md:px-6 lg:px-8 min-h-screen">
+    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+    <div class="surface-card p-4 shadow-2 border-round">
+        <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+            <div>
+                <div class="text-900 font-medium text-3xl">Agenda</div>
+                <div class="text-500 mt-1">
+                    @if(isCliente()) { Meus Agendamentos } 
+                    @else { Gestão de Consultas }
+                </div>
+            </div>
+            <div class="mt-3 md:mt-0">
+                @if(isCliente()) {
+                    <p-button label="Nova Consulta" icon="pi pi-plus" (onClick)="openNew()" />
+                }
+            </div>
+        </div>
+
+        <p-table [value]="agendamentos()" [loading]="loading()" responsiveLayout="scroll" styleClass="p-datatable-striped">
+            <ng-template #header>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Animal</th>
+                    <th>Veterinário</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-item>
+                <tr>
+                    <td>{{ item.dataHora | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ item.animalId }} (Ver Detalhe)</td> <td>
+                        @if(item.funcionarioId) { {{ item.funcionarioId }} } @else { <span class="text-500 italic">A definir</span> }
+                    </td>
+                    <td>
+                        <p-tag [value]="item.status" [severity]="getStatusSeverity(item.status)" [rounded]="true" />
+                    </td>
+                    <td>
+                        @if(isCliente() && item.status === 'AGENDADO') {
+                            <p-button icon="pi pi-times" [text]="true" severity="danger" pTooltip="Cancelar" (onClick)="cancelar(item.id)" />
+                        }
+
+                        @if(isAdminOrVet()) {
+                            @if(item.status === 'AGENDADO') {
+                                <p-button icon="pi pi-user-edit" [text]="true" severity="info" pTooltip="Atribuir Vet" (onClick)="openAssign(item.id)" />
+                                <p-button icon="pi pi-check-circle" [text]="true" severity="success" pTooltip="Concluir" (onClick)="concluir(item.id)" />
+                            }
+                        }
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
+
+<p-dialog [(visible)]="dialogVisible" [style]="{width: '450px'}" header="Nova Consulta" [modal]="true" styleClass="p-fluid">
+    <ng-template #content>
+        <form [formGroup]="form">
+            <div class="field">
+                <label class="font-bold">Animal</label>
+                <p-select [options]="meusAnimais()" formControlName="animalId" optionLabel="nome" optionValue="id" placeholder="Selecione o Pet" class="w-full" />
+            </div>
+            <div class="field">
+                <label class="font-bold">Data e Hora</label>
+                <p-datepicker formControlName="dataHora" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy" appendTo="body" class="w-full" />
+            </div>
+            <div class="field">
+                <label class="font-bold">Motivo / Descrição</label>
+                <textarea pInputTextarea formControlName="descricao" rows="3" class="w-full"></textarea>
+            </div>
+        </form>
+    </ng-template>
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="dialogVisible.set(false)" />
+        <p-button label="Agendar" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="dialogAssignVisible" [style]="{width: '400px'}" header="Atribuir Veterinário" [modal]="true" styleClass="p-fluid">
+    <ng-template #content>
+        <div class="field">
+            <label class="font-bold">Veterinário Responsável</label>
+            <p-select 
+                [options]="veterinarios()" 
+                [ngModel]="selectedVetId()" 
+                (ngModelChange)="selectedVetId.set($event)"
+                optionLabel="pessoa.nome" 
+                optionValue="id" 
+                placeholder="Selecione o Veterinário" 
+                appendTo="body"
+                class="w-full" />
+        </div>
+    </ng-template>
+    <ng-template #footer>
+        <p-button label="Salvar" icon="pi pi-check" (onClick)="assignVet()" />
+    </ng-template>
+</p-dialog>

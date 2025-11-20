@@ -20,13 +20,11 @@ public interface AnimalMapper {
     @Mapping(target = "fotoUrl", ignore = true)
     @Mapping(target = "usuario", ignore = true)
     @Mapping(target = "agendamentos", ignore = true)
-    @Mapping(target = "sexo", ignore = true)
     Animal toEntity(AnimalRequestDTO dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "fotoUrl", ignore = true)
     @Mapping(target = "usuario", ignore = true)
     @Mapping(target = "agendamentos", ignore = true)
-    @Mapping(target = "sexo", ignore = true)
     void updateEntityFromDto(AnimalRequestDTO dto, @MappingTarget Animal animal);
 }
