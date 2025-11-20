@@ -1,6 +1,7 @@
 package br.com.catdogclinicavet.backend_api.controller;
 
 import br.com.catdogclinicavet.backend_api.dto.response.TituloReceberResponseDTO;
+import br.com.catdogclinicavet.backend_api.security.AppRoles;
 import br.com.catdogclinicavet.backend_api.service.TituloReceberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +17,8 @@ public class TituloReceberController {
     @Autowired
     private TituloReceberService tituloReceberService;
 
-    @GetMapping
-    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'MEDICO VETERINARIO')")
+    @GetMapping("/interno")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<List<TituloReceberResponseDTO>> findAll() {
         return ResponseEntity.ok(tituloReceberService.findAll());
     }
@@ -28,14 +29,14 @@ public class TituloReceberController {
         return ResponseEntity.ok(tituloReceberService.findById(id));
     }
 
-    @PatchMapping("/{id}/baixa")
-    @PreAuthorize("hasAnyRole('FUNCIONARIO')")
+    @PatchMapping("/interno/{id}/baixa")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<TituloReceberResponseDTO> darBaixa(@PathVariable Long id) {
         return ResponseEntity.ok(tituloReceberService.darBaixa(id));
     }
 
-    @PatchMapping("/{id}/cancelar")
-    @PreAuthorize("hasAnyRole('FUNCIONARIO')")
+    @PatchMapping("/interno/{id}/cancelar")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
     public ResponseEntity<TituloReceberResponseDTO> cancelar(@PathVariable Long id) {
         return ResponseEntity.ok(tituloReceberService.cancelar(id));
     }

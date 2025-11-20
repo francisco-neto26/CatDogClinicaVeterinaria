@@ -18,4 +18,8 @@ export class AuthService {
   register(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, data);
   }
+
+  registerEmployee(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/register-employee`, data);
+  }
 }

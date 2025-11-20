@@ -9,20 +9,20 @@ import br.com.catdogclinicavet.backend_api.models.Animal;
 import br.com.catdogclinicavet.backend_api.models.Usuario;
 import br.com.catdogclinicavet.backend_api.repositories.AnimalRepository;
 import br.com.catdogclinicavet.backend_api.repositories.UsuarioRepository;
+import br.com.catdogclinicavet.backend_api.security.AppRoles; // <--- Importante
 import br.com.catdogclinicavet.backend_api.security.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class AnimalService {
@@ -39,15 +39,14 @@ public class AnimalService {
     @Autowired
     private StorageService storageService;
 
-    private Long getAuthenticatedUserId() {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return userDetails.getId();
+    private UserDetailsImpl getAuthenticatedUser() {
+        return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
     @Transactional
     @CacheEvict(value = "animais", allEntries = true)
     public AnimalResponseDTO createAnimal(AnimalRequestDTO dto, MultipartFile foto) {
-        Long authenticatedUserId = getAuthenticatedUserId();
+        Long authenticatedUserId = getAuthenticatedUser().getId();
         Usuario cliente = usuarioRepository.findById(authenticatedUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado."));
 
@@ -63,20 +62,48 @@ public class AnimalService {
         return animalMapper.toResponseDTO(savedAnimal);
     }
 
-    @Cacheable(value = "animais", key = "'all'")
+    @Cacheable(value = "animais", key = "#pageable.pageNumber")
     public Page<AnimalResponseDTO> findAllAnimals(Pageable pageable) {
-        Long authenticatedUserId = getAuthenticatedUserId();
-        return animalRepository.findByUsuarioId(authenticatedUserId, pageable)
-                .map(animalMapper::toResponseDTO);
+        UserDetailsImpl userDetails = getAuthenticatedUser();
+
+        // Lógica de verificação robusta usando AppRoles
+        boolean isAdminOrVet = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role ->
+                        role.equals("ROLE_" + AppRoles.FUNCIONARIO) ||
+                                role.equals("ROLE_" + AppRoles.VETERINARIO) ||
+                                role.equals("ROLE_" + AppRoles.ADMIN)
+                );
+
+        if (isAdminOrVet) {
+            // Se é Admin, busca todos
+            return animalRepository.findAll(pageable)
+                    .map(animalMapper::toResponseDTO);
+        } else {
+            // Se é Cliente, busca só os dele
+            return animalRepository.findByUsuarioId(userDetails.getId(), pageable)
+                    .map(animalMapper::toResponseDTO);
+        }
     }
+
+    // ... (Mantenha os outros métodos findById, updateAnimal, deleteAnimal iguais) ...
+    // Vou colocar aqui apenas o findById para garantir o import correto
 
     @Cacheable(value = "animal", key = "#id")
     public AnimalResponseDTO findAnimalById(Long id) {
-        Long authenticatedUserId = getAuthenticatedUserId();
+        UserDetailsImpl userDetails = getAuthenticatedUser();
         Animal animal = animalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Animal não encontrado com ID: " + id));
 
-        if (!Objects.equals(animal.getUsuario().getId(), authenticatedUserId)) {
+        boolean isAdminOrVet = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role ->
+                        role.equals("ROLE_" + AppRoles.FUNCIONARIO) ||
+                                role.equals("ROLE_" + AppRoles.VETERINARIO) ||
+                                role.equals("ROLE_" + AppRoles.ADMIN)
+                );
+
+        if (!isAdminOrVet && !Objects.equals(animal.getUsuario().getId(), userDetails.getId())) {
             throw new BusinessLogicException("Acesso negado: Você não tem permissão para visualizar este animal.");
         }
         return animalMapper.toResponseDTO(animal);
@@ -85,7 +112,7 @@ public class AnimalService {
     @Transactional
     @CacheEvict(value = {"animais", "animal"}, allEntries = true)
     public AnimalResponseDTO updateAnimal(Long id, AnimalRequestDTO dto, MultipartFile foto) {
-        Long authenticatedUserId = getAuthenticatedUserId();
+        Long authenticatedUserId = getAuthenticatedUser().getId();
         Animal animal = animalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Animal não encontrado com ID: " + id));
 
@@ -98,10 +125,6 @@ public class AnimalService {
         if (foto != null && !foto.isEmpty()) {
             String fotoUrl = storageService.uploadFile(foto);
             animal.setFotoUrl(fotoUrl);
-        } else if (dto.dataNascimento() == null && animal.getFotoUrl() != null) {
-            // Se foto for nula e não houver nova foto, mas havia uma antiga, manter a antiga.
-            // A menos que a intenção seja remover explicitamente (DTO precisaria de um campo para isso)
-            // Por enquanto, só atualiza se uma nova foto for fornecida.
         }
 
         Animal updatedAnimal = animalRepository.save(animal);
@@ -111,7 +134,7 @@ public class AnimalService {
     @Transactional
     @CacheEvict(value = {"animais", "animal"}, allEntries = true)
     public void deleteAnimal(Long id) {
-        Long authenticatedUserId = getAuthenticatedUserId();
+        Long authenticatedUserId = getAuthenticatedUser().getId();
         Animal animal = animalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Animal não encontrado com ID: " + id));
 

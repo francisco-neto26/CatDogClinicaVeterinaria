@@ -40,7 +40,7 @@ public class Pessoa implements Serializable {
     @Column
     private String cidade;
 
-    @Column(length = 2)
+    @Column(columnDefinition = "bpchar(2)")
     private String uf;
 
     @Column(length = 10)
