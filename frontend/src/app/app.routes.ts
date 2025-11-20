@@ -4,6 +4,7 @@ import { RegisterComponent } from './features/auth/register/register';
 import { DashboardComponent } from './features/dashboard/dashboard';
 import { authGuard } from './core/guards/auth-guard';
 import { ProfileComponent } from './features/profile/profile';
+import { AnimalListComponent } from './features/animais/animal-list/animal-list';
 
 
 export const routes: Routes = [
@@ -28,10 +29,20 @@ export const routes: Routes = [
         component: ProfileComponent,
         canActivate: [authGuard]
     },
-
+    { 
+        path: 'animais', 
+        component: AnimalListComponent, 
+        canActivate: [authGuard] 
+    },
+    { 
+        path: 'meus-animais', 
+        component: AnimalListComponent, 
+        canActivate: [authGuard] 
+    },
     {
         path: '**',
         redirectTo: ''
     }
+    
 
 ];

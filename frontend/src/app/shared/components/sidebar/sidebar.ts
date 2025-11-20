@@ -10,14 +10,20 @@ import { OpenTab } from '../../../store/layout/layout.actions';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, TieredMenuModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    TieredMenuModule
+  ],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.scss']
 })
 export class SidebarComponent implements OnInit {
   items: MenuItem[] | undefined;
   userRole: string = '';
+
   private store = inject(Store);
+  private router = inject(Router);
 
   ngOnInit() {
     this.decodeToken();
@@ -40,9 +46,12 @@ export class SidebarComponent implements OnInit {
     return {
       label,
       icon,
-      routerLink,
+      routerLink, // O PrimeNG usa isso para gerar o href
       command: () => {
+        // 1. Abre a aba no topo
         this.store.dispatch(new OpenTab({ label, icon, routerLink }));
+        // 2. Força a navegação para garantir que a tela mude
+        this.router.navigate([routerLink]);
       }
     };
   }
@@ -51,7 +60,7 @@ export class SidebarComponent implements OnInit {
     const isFuncionario = this.userRole === 'ROLE_FUNCIONARIO' || this.userRole === 'ROLE_MEDICO_VETERINARIO';
 
     this.items = [
-        this.createMenuItem('Dashboard', 'pi pi-th-large', '/')
+      this.createMenuItem('Dashboard', 'pi pi-th-large', '/')
     ];
 
     if (isFuncionario) {
@@ -62,7 +71,7 @@ export class SidebarComponent implements OnInit {
           icon: 'pi pi-users',
           items: [
             this.createMenuItem('Clientes', 'pi pi-id-card', '/clientes'),
-            this.createMenuItem('Pacientes', 'pi pi-heart', '/animais')
+            this.createMenuItem('Pacientes', 'pi pi-heart', '/animais') 
           ]
         },
         {
@@ -76,7 +85,7 @@ export class SidebarComponent implements OnInit {
           label: 'Financeiro',
           icon: 'pi pi-dollar',
           items: [
-            this.createMenuItem('Contas Medicas', 'pi pi-receipt', '/contas'),
+            this.createMenuItem('Contas', 'pi pi-receipt', '/contas'),
             this.createMenuItem('Títulos', 'pi pi-wallet', '/titulos')
           ]
         },
@@ -96,7 +105,7 @@ export class SidebarComponent implements OnInit {
         {
           label: 'Área do Tutor',
           icon: 'pi pi-home',
-          items: [
+          items: [          
             this.createMenuItem('Meus Animais', 'pi pi-heart', '/meus-animais'),
             this.createMenuItem('Nova Consulta', 'pi pi-calendar-plus', '/novo-agendamento'),
             this.createMenuItem('Histórico', 'pi pi-history', '/meus-agendamentos')
