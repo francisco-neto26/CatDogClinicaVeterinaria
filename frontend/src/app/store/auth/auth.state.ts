@@ -1,8 +1,9 @@
 import { State, Action, StateContext, Selector } from '@ngxs/store';
 import { Injectable } from '@angular/core';
-import { Login, Logout } from './auth.actions';
 import { tap } from 'rxjs/operators';
+import { Login, Logout } from './auth.actions';
 import { AuthService } from '../../core/services/auth';
+
 
 export interface AuthStateModel {
   token: string | null;
@@ -11,7 +12,8 @@ export interface AuthStateModel {
 @State<AuthStateModel>({
   name: 'auth',
   defaults: {
-    token: localStorage.getItem('token')
+    // MUDANÇA 1: Lê do sessionStorage (inicia vazio se fechar o navegador)
+    token: sessionStorage.getItem('token')
   }
 })
 @Injectable()
@@ -33,7 +35,8 @@ export class AuthState {
     return this.authService.login(action.payload).pipe(
       tap((result: any) => {
         const token = result.token;
-        localStorage.setItem('token', token);
+        // MUDANÇA 2: Salva na sessão atual
+        sessionStorage.setItem('token', token);
         ctx.patchState({ token });
       })
     );
@@ -41,7 +44,8 @@ export class AuthState {
 
   @Action(Logout)
   logout(ctx: StateContext<AuthStateModel>) {
-    localStorage.removeItem('token');
+    // MUDANÇA 3: Limpa da sessão
+    sessionStorage.removeItem('token');
     ctx.patchState({ token: null });
   }
 }
