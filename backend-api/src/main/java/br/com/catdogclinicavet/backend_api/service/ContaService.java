@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ContaService {
@@ -35,6 +37,19 @@ public class ContaService {
 
     @Autowired
     private ContaMapper contaMapper;
+
+    public List<ContaResponseDTO> findAll(Long clienteId) {
+        List<Conta> contas;
+        if (clienteId != null) {
+            contas = contaRepository.findByClienteId(clienteId);
+        } else {
+            contas = contaRepository.findAll();
+        }
+
+        return contas.stream()
+                .map(contaMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public ContaResponseDTO abrirConta(Long agendamentoId) {

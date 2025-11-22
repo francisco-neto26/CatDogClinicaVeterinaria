@@ -1,6 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms'; // <--- Adicionado FormsModule
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+
 import { Store } from '@ngxs/store';
 import { AuthState } from '../../../store/auth/auth.state';
 import { MessageService, ConfirmationService } from 'primeng/api';
@@ -49,9 +51,13 @@ export class AgendamentoListComponent implements OnInit {
   private confirmationService = inject(ConfirmationService);
   private fb = inject(FormBuilder);
   private store = inject(Store);
+  private route = inject(ActivatedRoute);
 
   agendamentos = signal<any[]>([]);
-  meusAnimais = signal<any[]>([]);
+  allAgendamentos: any[] = []; 
+  
+  meusAnimais = signal<any[]>([]); 
+  allAnimais = signal<any[]>([]); 
   veterinarios = signal<any[]>([]);
   
   loading = signal(true);
@@ -60,7 +66,11 @@ export class AgendamentoListComponent implements OnInit {
   saving = signal(false);
   
   isCliente = signal(false);
-  isAdminOrVet = signal(false);
+  isAdmin = signal(false);
+  isVet = signal(false);
+  
+  preSelectedClientId: number | null = null;
+  preSelectedClientName: string | null = null;
 
   form: FormGroup;
   selectedAgendamentoId: number | null = null;
@@ -70,20 +80,26 @@ export class AgendamentoListComponent implements OnInit {
     this.form = this.fb.group({
       animalId: [null, Validators.required],
       dataHora: [null, Validators.required],
-      descricao: ['']
+      descricao: [''],
+      funcionarioId: [null]
     });
   }
 
   ngOnInit() {
     this.checkRole();
+    this.loadInitialData();
+
+    this.route.queryParams.subscribe(params => {
+        if (params['clienteId']) {
+            this.preSelectedClientId = Number(params['clienteId']);
+            this.preSelectedClientName = params['clienteNome'];
+            this.filterAnimais(this.preSelectedClientId);
+        } else if (this.isCliente()) {
+            this.filterAnimais(0);
+        }
+    });
+
     this.loadAgendamentos();
-    
-    if (this.isCliente()) {
-        this.loadMeusAnimais();
-    }
-    if (this.isAdminOrVet()) {
-        this.loadVeterinarios();
-    }
   }
 
   checkRole() {
@@ -93,10 +109,41 @@ export class AgendamentoListComponent implements OnInit {
             const payload = JSON.parse(atob(token.split('.')[1]));
             const role = payload.role;
             this.isCliente.set(role === 'ROLE_CLIENTE');
-            this.isAdminOrVet.set(role === 'ROLE_FUNCIONARIO' || role === 'ROLE_MEDICO_VETERINARIO');
-        } catch (e) {
-            console.error(e);
-        }
+            this.isAdmin.set(role === 'ROLE_FUNCIONARIO');
+            this.isVet.set(role === 'ROLE_MEDICO_VETERINARIO');
+        } catch (e) { console.error(e); }
+    }
+  }
+
+  isAdminOrVet() {
+      return this.isAdmin() || this.isVet();
+  }
+
+  canCreate() {
+      return true;
+  }
+
+  loadInitialData() {
+       this.userService.findVeterinarios().subscribe(vets => {
+        this.veterinarios.set(vets);
+    });
+
+    if (this.isAdminOrVet()) {
+        this.animalService.findAll(0, 1000).subscribe(data => {
+            this.allAnimais.set(data.content);
+            this.meusAnimais.set(data.content); 
+        });
+    } else {
+        this.animalService.findAll(0, 100).subscribe(data => {
+            this.meusAnimais.set(data.content);
+        });
+    }
+  }
+
+  filterAnimais(clienteId: number) {
+    if (this.isAdminOrVet() && clienteId > 0) {
+        const filtrados = this.allAnimais().filter(a => a.usuarioId === clienteId);
+        this.meusAnimais.set(filtrados);
     }
   }
 
@@ -112,7 +159,8 @@ export class AgendamentoListComponent implements OnInit {
 
     request$.subscribe({
       next: (data) => {
-        this.agendamentos.set(data.content);
+        this.allAgendamentos = data.content;
+        this.applyFilter();
         this.loading.set(false);
       },
       error: () => {
@@ -122,19 +170,22 @@ export class AgendamentoListComponent implements OnInit {
     });
   }
 
-  loadMeusAnimais() {
-    this.animalService.findAll(0, 100).subscribe({
-        next: (data) => this.meusAnimais.set(data.content)
-    });
+  applyFilter() {
+    if (this.preSelectedClientId) {
+        const filtrados = this.allAgendamentos.filter(a => a.clienteId === this.preSelectedClientId);
+        this.agendamentos.set(filtrados);
+    } else {
+        this.agendamentos.set(this.allAgendamentos);
+    }
   }
 
-  loadVeterinarios() {
-    this.userService.findAll().subscribe({
-        next: (users) => {
-            const vets = users.filter(u => u.role.nome === 'MEDICO VETERINARIO');
-            this.veterinarios.set(vets);
-        }
-    });
+  limparFiltro() {
+      this.preSelectedClientId = null;
+      this.preSelectedClientName = null;
+      this.applyFilter();
+      if(this.isAdminOrVet()) {
+          this.meusAnimais.set(this.allAnimais());
+      }
   }
 
   openNew() {

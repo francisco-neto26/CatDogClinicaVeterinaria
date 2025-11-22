@@ -14,8 +14,16 @@ export class UserService {
     return this.http.get(`${this.apiUrl}/me`);
   }
 
+  findVeterinarios(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/veterinarios`);
+  }
+
   updateProfile(data: any): Observable<any> {
     return this.http.put(`${this.apiUrl}`, data);
+  }
+
+  changePassword(data: any): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/password`, data);
   }
 
   updatePhoto(file: File): Observable<any> {
@@ -40,5 +48,9 @@ export class UserService {
 
   create(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/interno`, data);
+  }
+
+  update(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/interno/${id}`, data);
   }
 }

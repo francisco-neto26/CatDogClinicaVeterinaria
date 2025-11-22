@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 import { TableModule } from 'primeng/table';
@@ -61,7 +62,7 @@ export class TipoItemListComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar tipos.' });
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar dados.' });
       }
     });
   }
@@ -78,16 +79,24 @@ export class TipoItemListComponent implements OnInit {
 
   delete(item: any) {
     this.confirmationService.confirm({
-      message: `Excluir ${item.nome}?`,
-      header: 'Confirmar',
+      message: `Tem certeza que deseja excluir "${item.nome}"?`,
+      header: 'Confirmar Exclusão',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.tipoItemService.delete(item.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Excluído' });
+            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Registro excluído' });
             this.loadItens();
           },
-          error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir' })
+          error: (err) => {
+            let msg = 'Erro ao excluir registro.';
+            
+            if (err.status === 409) {
+                msg = 'Não é possível excluir: Este tipo está vinculado a itens do catálogo.';
+            }
+            
+            this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
+          }
         });
       }
     });

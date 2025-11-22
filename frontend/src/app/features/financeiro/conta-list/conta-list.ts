@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 import { TableModule } from 'primeng/table';
@@ -34,44 +35,69 @@ import { ItemServicoService } from '../../../core/services/item-servico';
   styleUrls: ['./conta-list.scss']
 })
 export class ContaListComponent implements OnInit {
-    // Nota: Em um sistema real, listariamos todas as contas. 
-    // Por simplicidade, vou focar em "Abrir Conta" a partir de um Agendamento ID.
-    // Para o MVP, vamos simular uma busca de conta por ID ou Agendamento.
-    
-    // Mas para listar, precisamos de um endpoint findAll no backend que não criamos específico para contas.
-    // Vamos assumir que o usuario entra aqui, digita o ID do Agendamento e "Abre" a conta.
-    
     private contaService = inject(ContaService);
     private itemService = inject(ItemServicoService);
     private messageService = inject(MessageService);
+    private route = inject(ActivatedRoute);
 
     agendamentoIdSearch: number | null = null;
-    contaAtual = signal<any>(null);
-    itensCatalogo = signal<any[]>([]);
     
-    // Modal Adicionar Item
+    listaContas = signal<any[]>([]);
+    
+    contaAtual = signal<any>(null);
+    
+    itensCatalogo = signal<any[]>([]);
     dialogItemVisible = signal(false);
     selectedItemId: number | null = null;
     quantidadeItem: number = 1;
+    
+    preSelectedClientName: string | null = null;
 
     ngOnInit() {
         this.loadCatalogo();
+        
+        this.route.queryParams.subscribe(params => {
+            if (params['clienteId']) {
+                const clienteId = Number(params['clienteId']);
+                this.preSelectedClientName = params['clienteNome'];
+                this.carregarContasPorCliente(clienteId);
+            }
+        });
     }
 
     loadCatalogo() {
         this.itemService.findAll().subscribe(data => this.itensCatalogo.set(data));
     }
+    
+    carregarContasPorCliente(clienteId: number) {
+        this.contaService.findAll(clienteId).subscribe({
+            next: (data) => {
+                this.listaContas.set(data);
+                this.contaAtual.set(null);
+            },
+            error: () => this.messageService.add({severity:'error', summary:'Erro', detail:'Erro ao buscar contas.'})
+        });
+    }
 
-    buscarConta() {
+    buscarContaPorAgendamento() {
         if(!this.agendamentoIdSearch) return;
         
         this.contaService.abrirConta(this.agendamentoIdSearch).subscribe({
             next: (data) => {
                 this.contaAtual.set(data);
+                this.listaContas.set([]);
                 this.messageService.add({severity:'success', summary:'Encontrada', detail:`Conta #${data.id} carregada`});
             },
             error: () => this.messageService.add({severity:'error', summary:'Erro', detail:'Agendamento não encontrado ou erro.'})
         });
+    }
+
+    selecionarConta(conta: any) {
+        this.contaAtual.set(conta);
+    }
+    
+    voltarParaLista() {
+        this.contaAtual.set(null);
     }
 
     adicionarItem() {

@@ -35,7 +35,10 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(Usuario usuario) {
-        String roleName = usuario.getRole().getNome();
+        String roleName = usuario.getRole().getNome().toUpperCase();
+
+        roleName = roleName.replace(" ", "_");
+
         if (!roleName.startsWith("ROLE_")) {
             roleName = "ROLE_" + roleName;
         }
@@ -44,7 +47,7 @@ public class UserDetailsImpl implements UserDetails {
 
         return new UserDetailsImpl(
                 usuario.getId(),
-                usuario.getPessoa().getNome(), // <--- PEGA O NOME DA PESSOA
+                usuario.getPessoa().getNome(),
                 usuario.getEmail(),
                 usuario.getSenha(),
                 usuario.getFotoUrl(),

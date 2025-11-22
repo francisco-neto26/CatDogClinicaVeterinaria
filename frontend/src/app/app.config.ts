@@ -7,10 +7,11 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 import { provideStore } from '@ngxs/store';
 import { AuthState } from './store/auth/auth.state';
+import { LayoutState } from './store/layout/layout.state';
 import { NgxsLoggerPluginModule } from '@ngxs/logger-plugin';
 import { MessageService } from 'primeng/api';
+import { IMAGE_CONFIG } from '@angular/common';
 import { authInterceptor } from './core/interceptors/auth-interceptor';
-import { LayoutState } from './store/layout/layout.state';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,13 +24,16 @@ export const appConfig: ApplicationConfig = {
       }
     }),
     provideStore(
-        [AuthState],
-        importProvidersFrom(NgxsLoggerPluginModule.forRoot()) 
-    ),
-    provideStore(
         [AuthState, LayoutState],
         importProvidersFrom(NgxsLoggerPluginModule.forRoot()) 
     ),
-    MessageService
+    MessageService,
+    {
+      provide: IMAGE_CONFIG,
+      useValue: {
+        disableImageSizeWarning: true, 
+        disableImageLazyLoadWarning: true
+      }
+    }
   ]
 };

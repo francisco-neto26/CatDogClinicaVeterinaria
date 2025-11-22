@@ -1,5 +1,6 @@
 package br.com.catdogclinicavet.backend_api.dto.request;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -11,5 +12,9 @@ public record UserUpdateRequestDTO(
         String bairro,
         String cidade,
         @Size(max = 2) String uf,
-        @Size(max = 10) String cep
+        @Size(max = 10) String cep,
+        @Email String email,
+        String role,
+        String currentPassword,
+        @Size(min = 6) String newPassword
 ) {}

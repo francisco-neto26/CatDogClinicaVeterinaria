@@ -46,11 +46,9 @@ export class SidebarComponent implements OnInit {
     return {
       label,
       icon,
-      routerLink, // O PrimeNG usa isso para gerar o href
+      routerLink,
       command: () => {
-        // 1. Abre a aba no topo
         this.store.dispatch(new OpenTab({ label, icon, routerLink }));
-        // 2. Força a navegação para garantir que a tela mude
         this.router.navigate([routerLink]);
       }
     };

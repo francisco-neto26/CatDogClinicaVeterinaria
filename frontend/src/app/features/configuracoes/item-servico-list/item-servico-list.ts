@@ -7,7 +7,7 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select'; // Novo Dropdown
+import { SelectModule } from 'primeng/select'; // CORREÇÃO: Novo componente
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -25,7 +25,7 @@ import { TipoItemService } from '../../../core/services/tipo-item';
     ButtonModule,
     DialogModule,
     InputTextModule,
-    SelectModule,
+    SelectModule, // Novo
     InputNumberModule,
     ToastModule,
     ConfirmDialogModule,
@@ -43,7 +43,7 @@ export class ItemServicoListComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   itens = signal<any[]>([]);
-  tipos = signal<any[]>([]);
+  tipos = signal<any[]>([]); // Lista para o dropdown
   loading = signal(true);
   dialogVisible = signal(false);
   saving = signal(false);
@@ -80,7 +80,7 @@ export class ItemServicoListComponent implements OnInit {
 
   loadTipos() {
     this.tipoService.findAll().subscribe({
-      next: (data) => this.tipos.set(data)
+        next: (data) => this.tipos.set(data)
     });
   }
 
@@ -96,7 +96,7 @@ export class ItemServicoListComponent implements OnInit {
 
   delete(item: any) {
     this.confirmationService.confirm({
-      message: `Excluir ${item.descricao}?`,
+      message: `Excluir "${item.descricao}"?`,
       header: 'Confirmar',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
@@ -136,7 +136,7 @@ export class ItemServicoListComponent implements OnInit {
   }
 
   getTipoNome(id: number): string {
-    const tipo = this.tipos().find(t => t.id === id);
-    return tipo ? tipo.nome : 'N/A';
+      const tipo = this.tipos().find(t => t.id === id);
+      return tipo ? tipo.nome : 'N/A';
   }
 }

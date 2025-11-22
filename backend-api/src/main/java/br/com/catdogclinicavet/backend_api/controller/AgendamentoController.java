@@ -21,8 +21,8 @@ public class AgendamentoController {
     @Autowired
     private AgendamentoService agendamentoService;
 
-    @PostMapping("/cliente")
-    @PreAuthorize(AppRoles.ACESSO_CLIENT)
+    @PostMapping
+    @PreAuthorize(AppRoles.ACESSO_ANIMAIS)
     public ResponseEntity<AgendamentoResponseDTO> create(@Valid @RequestBody AgendamentoRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(agendamentoService.create(dto));
     }

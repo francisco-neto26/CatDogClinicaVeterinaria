@@ -41,6 +41,12 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.create(dto));
     }
 
+    @PutMapping("/interno/{id}")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
+    public ResponseEntity<UsuarioResponseDTO> update(@PathVariable Long id, @Valid @RequestBody UserUpdateRequestDTO dto) {
+        return ResponseEntity.ok(usuarioService.updateUser(id, dto));
+    }
+
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UsuarioResponseDTO> getMe() {
@@ -51,6 +57,13 @@ public class UsuarioController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UsuarioResponseDTO> updateProfile(@Valid @RequestBody UserUpdateRequestDTO dto) {
         return ResponseEntity.ok(usuarioService.updateProfile(dto));
+    }
+
+    @PatchMapping("/password")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(@Valid @RequestBody UserUpdateRequestDTO dto) {
+        usuarioService.changePassword(dto);
     }
 
     @PatchMapping(value = "/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

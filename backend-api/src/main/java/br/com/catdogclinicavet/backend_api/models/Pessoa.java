@@ -2,6 +2,7 @@ package br.com.catdogclinicavet.backend_api.models;
 
 import br.com.catdogclinicavet.backend_api.models.Usuario;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
@@ -46,6 +47,7 @@ public class Pessoa implements Serializable {
     @Column(length = 10)
     private String cep;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "pessoa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Usuario usuario;
 

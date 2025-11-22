@@ -1,5 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 import { TableModule } from 'primeng/table';
@@ -28,9 +30,15 @@ export class TituloListComponent implements OnInit {
   private tituloService = inject(TituloService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   titulos = signal<any[]>([]);
+  allTitulos: any[] = [];
   loading = signal(true);
+  
+  preSelectedClientId: number | null = null;
+  preSelectedClientName: string | null = null;
 
   ngOnInit() {
     this.loadTitulos();
@@ -40,11 +48,35 @@ export class TituloListComponent implements OnInit {
     this.loading.set(true);
     this.tituloService.findAll().subscribe({
         next: (data) => {
-            this.titulos.set(data);
+            this.allTitulos = data;
+            
+            this.route.queryParams.subscribe(params => {
+                if (params['clienteId']) {
+                    this.preSelectedClientId = Number(params['clienteId']);
+                    this.preSelectedClientName = params['clienteNome'];
+                    this.filtrarPorCliente(this.preSelectedClientId);
+                } else {
+                    this.titulos.set(this.allTitulos);
+                }
+            });
+            
             this.loading.set(false);
         },
         error: () => this.loading.set(false)
     });
+  }
+
+  filtrarPorCliente(clienteId: number) {
+      const filtrados = this.allTitulos.filter(t => t.clienteId === clienteId);
+      this.titulos.set(filtrados);
+      this.messageService.add({severity:'info', summary:'Filtro', detail:`Exibindo títulos de ${this.preSelectedClientName}`});
+  }
+
+  limparFiltro() {
+      this.preSelectedClientId = null;
+      this.preSelectedClientName = null;
+      this.titulos.set(this.allTitulos);
+      this.router.navigate([], { queryParams: {} });
   }
 
   darBaixa(titulo: any) {
