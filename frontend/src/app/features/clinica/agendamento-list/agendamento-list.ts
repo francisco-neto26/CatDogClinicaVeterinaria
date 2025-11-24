@@ -125,7 +125,8 @@ export class AgendamentoListComponent implements OnInit {
 
   loadInitialData() {
        this.userService.findVeterinarios().subscribe(vets => {
-        this.veterinarios.set(vets);
+        const veterinariosFiltered = vets.filter((vet: any) => vet.role?.nome === 'MEDICO VETERINARIO');
+        this.veterinarios.set(veterinariosFiltered);
     });
 
     if (this.isAdminOrVet()) {

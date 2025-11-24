@@ -11,7 +11,7 @@ export class AgendamentoService {
   private apiUrl = `${environment.apiUrl}/agendamentos`;
 
   create(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/cliente`, data);
+    return this.http.post(this.apiUrl, data);
   }
 
   listMine(page: number = 0, size: number = 10): Observable<any> {

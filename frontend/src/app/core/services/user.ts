@@ -15,7 +15,7 @@ export class UserService {
   }
 
   findVeterinarios(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/veterinarios`);
+    return this.http.get<any[]>(`${this.apiUrl}/interno`);
   }
 
   updateProfile(data: any): Observable<any> {
