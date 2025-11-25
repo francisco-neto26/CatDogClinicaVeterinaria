@@ -39,6 +39,9 @@ public class AgendamentoService {
     @Autowired
     private AgendamentoMapper agendamentoMapper;
 
+    @Autowired
+    private ContaService contaService;
+
     private UserDetailsImpl getAuthenticatedUser() {
         return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
@@ -79,7 +82,6 @@ public class AgendamentoService {
             Usuario veterinario = usuarioRepository.findById(dto.funcionarioId())
                     .orElseThrow(() -> new ResourceNotFoundException("Veterinário não encontrado."));
 
-            // Normaliza a string do banco para comparar (caso tenha espaços)
             String roleName = veterinario.getRole().getNome().replace(" ", "_");
             boolean isVet = roleName.equals("MEDICO_VETERINARIO");
 
@@ -156,6 +158,9 @@ public class AgendamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado."));
 
         agendamento.setStatus(AgendamentoStatus.CONCLUIDO);
+
+        contaService.abrirConta(id);
+
         return agendamentoMapper.toResponseDTO(agendamentoRepository.save(agendamento));
     }
 

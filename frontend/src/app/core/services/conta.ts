@@ -31,7 +31,7 @@ export class ContaService {
   }
 
   fecharConta(contaId: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/interno/${contaId}/fechar`, {});
+      return this.http.post(`${this.apiUrl}/interno/${contaId}/fechar`, {});
   }
 
   findById(id: number): Observable<any> {

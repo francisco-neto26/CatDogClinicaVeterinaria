@@ -24,7 +24,7 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @GetMapping("/interno")
-    @PreAuthorize(AppRoles.ACESSO_INTERNO)
+    @PreAuthorize(AppRoles.ACESSO_ANIMAIS)
     public ResponseEntity<List<UsuarioResponseDTO>> findAll() {
         return ResponseEntity.ok(usuarioService.findAll());
     }

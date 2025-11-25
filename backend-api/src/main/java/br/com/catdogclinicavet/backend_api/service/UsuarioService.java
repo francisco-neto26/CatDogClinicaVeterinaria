@@ -52,10 +52,8 @@ public class UsuarioService {
                 .collect(Collectors.toList());
     }
 
-    // --- MÉTODO QUE FALTAVA ---
     @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> findVeterinarios() {
-        // Busca por todas as variações de escrita para garantir compatibilidade
         List<String> nomesPossiveis = List.of(
                 "MEDICO VETERINARIO",
                 "MEDICO_VETERINARIO",
@@ -67,7 +65,6 @@ public class UsuarioService {
                 .map(usuarioMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
-    // --------------------------
 
     public UsuarioResponseDTO findById(Long id) {
         Usuario usuario = usuarioRepository.findById(id)
