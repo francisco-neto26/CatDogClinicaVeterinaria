@@ -37,7 +37,7 @@
         <div class="user-info flex align-items-center gap-2">
             <div class="text-right hidden md:block">
                 <div class="text-white font-medium text-sm">{{ userName }}</div>
-                <div class="text-400 text-xs">{{ userRole === 'ROLE_FUNCIONARIO' ? 'Admin' : 'Cliente' }}</div>
+                <div class="text-400 text-xs">{{ getRoleLabel() }}</div>
             </div>
 
             <p-avatar 

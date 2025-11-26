@@ -11,12 +11,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/contas")
 public class ContaController {
 
     @Autowired
     private ContaService contaService;
+
+    @GetMapping("/interno")
+    @PreAuthorize(AppRoles.ACESSO_INTERNO)
+    public ResponseEntity<List<ContaResponseDTO>> findAll(@RequestParam(required = false) Long clienteId) {
+        return ResponseEntity.ok(contaService.findAll(clienteId));
+    }
 
     @PostMapping("/interno/abrir/{agendamentoId}")
     @PreAuthorize(AppRoles.ACESSO_INTERNO)

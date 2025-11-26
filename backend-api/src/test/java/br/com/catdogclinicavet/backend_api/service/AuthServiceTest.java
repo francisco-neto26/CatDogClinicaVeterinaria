@@ -48,7 +48,6 @@ class AuthServiceTest {
     @Mock private AuthenticationManager authenticationManager;
     @Mock private TokenService tokenService;
 
--
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(authService, "registrationQueue", "vet.registration.queue");

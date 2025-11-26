@@ -5,7 +5,7 @@
         <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
             <div>
                 <div class="text-900 font-medium text-3xl">Tipos de Serviço</div>
-                <div class="text-500 mt-1">Categorias para o catálogo</div>
+                <div class="text-500 mt-1">Categorias (Ex: Vacina, Cirurgia, Exame)</div>
             </div>
             <div class="mt-3 md:mt-0">
                 <p-button label="Novo Tipo" icon="pi pi-plus" (onClick)="openNew()" />
@@ -32,6 +32,11 @@
                     </td>
                 </tr>
             </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="3" class="text-center p-4">Nenhum registro encontrado.</td>
+                </tr>
+            </ng-template>
         </p-table>
     </div>
 </div>
@@ -41,7 +46,10 @@
         <form [formGroup]="form">
             <div class="field">
                 <label for="nome" class="font-bold">Nome</label>
-                <input type="text" pInputText id="nome" formControlName="nome" autofocus />
+                <input type="text" pInputText id="nome" formControlName="nome" required autofocus />
+                @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
+                    <small class="p-error">Nome é obrigatório.</small>
+                }
             </div>
         </form>
     </ng-template>

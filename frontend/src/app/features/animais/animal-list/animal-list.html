@@ -1,11 +1,13 @@
-<div class="surface-ground px-4 py-5 md:px-6 lg:px-8">
+<div class="surface-ground px-4 py-5 md:px-6 lg:px-8 min-h-screen">
     <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 
     <div class="surface-card p-4 shadow-2 border-round">
         <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
             <div>
                 <div class="text-900 font-medium text-3xl">Animais</div>
-                <div class="text-500 mt-1">Gerencie os pacientes da clínica</div>
+                <div class="text-500 mt-1">
+                    @if(isAdminOrVet()) { Gestão de Pacientes } @else { Meus Pets }
+                </div>
             </div>
             <div class="mt-3 md:mt-0">
                 <p-button label="Novo Animal" icon="pi pi-plus" (onClick)="openNew()" />
@@ -30,6 +32,7 @@
                     <th>Espécie/Raça</th>
                     <th>Sexo</th>
                     <th>Nascimento</th>
+                    @if(isAdminOrVet()) { <th>Tutor</th> }
                     <th>Ações</th>
                 </tr>
             </ng-template>
@@ -56,16 +59,25 @@
                             [rounded]="true" />
                     </td>
                     <td>{{ animal.dataNascimento | date:'dd/MM/yyyy' }}</td>
+                    
+                    @if(isAdminOrVet()) { 
+                        <td><span class="text-500">ID: {{ animal.usuarioId }}</span></td> 
+                    }
+
                     <td>
-                        <p-button icon="pi pi-pencil" [text]="true" severity="info" (onClick)="editAnimal(animal)" />
-                        <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="deleteAnimal(animal)" />
+                        <div class="flex gap-2">
+                            <p-button icon="pi pi-pencil" [text]="true" severity="info" (onClick)="editAnimal(animal)" />
+                            <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="deleteAnimal(animal)" />
+                        </div>
                     </td>
                 </tr>
             </ng-template>
             
             <ng-template #emptymessage>
                 <tr>
-                    <td colspan="6" class="text-center p-4">Nenhum animal encontrado.</td>
+                    <td [attr.colspan]="isAdminOrVet() ? 7 : 6" class="text-center p-4">
+                        Nenhum animal encontrado.
+                    </td>
                 </tr>
             </ng-template>
         </p-table>
@@ -93,8 +105,25 @@
                     class="w-full text-center" />
             </div>
 
+            @if (isAdminOrVet()) {
+                <div class="field">
+                    <label class="font-bold">Tutor (Dono do Animal)</label>
+                    <p-select 
+                        [options]="clientes()" 
+                        formControlName="clienteId" 
+                        optionLabel="pessoa.nome" 
+                        optionValue="id" 
+                        placeholder="Selecione o Tutor..." 
+                        [filter]="true"
+                        filterBy="pessoa.nome,pessoa.cpfcnpj"
+                        appendTo="body"
+                        class="w-full" />
+                    <small class="text-500">Selecione o cliente dono deste animal.</small>
+                </div>
+            }
+
             <div class="field">
-                <label for="nome" class="font-bold">Nome</label>
+                <label for="nome" class="font-bold">Nome do Animal</label>
                 <input type="text" pInputText id="nome" formControlName="nome" required autofocus />
                 @if (animalForm.get('nome')?.invalid && animalForm.get('nome')?.touched) {
                     <small class="p-error">Nome é obrigatório.</small>
@@ -122,7 +151,8 @@
                         optionLabel="label" 
                         optionValue="value" 
                         placeholder="Selecione" 
-                        class="w-full" />
+                        class="w-full"
+                        appendTo="body" />
                 </div>
                 <div class="field col-6">
                     <label for="cor" class="font-bold">Cor/Pelagem</label>
@@ -137,8 +167,8 @@
                     formControlName="dataNascimento" 
                     dateFormat="dd/mm/yy" 
                     [showIcon]="true" 
-                    class="w-full" 
-                    appendTo="body"/>
+                    class="w-full"
+                    appendTo="body" />
             </div>
         </form>
     </ng-template>

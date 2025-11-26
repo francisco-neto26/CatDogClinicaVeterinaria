@@ -24,14 +24,21 @@
             <ng-template #body let-item>
                 <tr>
                     <td><span class="font-bold">{{ item.descricao }}</span></td>
-                    <td><p-tag [value]="getTipoNome(item.tipoItemId)" severity="info" /></td>
-                    <td>{{ item.precoUnitario | currency:'BRL' }}</td>
+                    <td>
+                        <p-tag [value]="getTipoNome(item.tipoItemId)" severity="info" />
+                    </td>
+                    <td class="font-bold text-green-600">{{ item.precoUnitario | currency:'BRL' }}</td>
                     <td>
                         <div class="flex gap-2">
                             <p-button icon="pi pi-pencil" [text]="true" severity="info" (onClick)="edit(item)" />
                             <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="delete(item)" />
                         </div>
                     </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="4" class="text-center p-4">Nenhum item cadastrado.</td>
                 </tr>
             </ng-template>
         </p-table>
@@ -43,28 +50,32 @@
         <form [formGroup]="form">
             <div class="field">
                 <label for="descricao" class="font-bold">Descrição</label>
-                <input type="text" pInputText id="descricao" formControlName="descricao" />
+                <input type="text" pInputText id="descricao" formControlName="descricao" placeholder="Ex: Vacina V10" required autofocus />
             </div>
+            
             <div class="formgrid grid">
                 <div class="field col-6">
                     <label for="tipo" class="font-bold">Categoria</label>
                     <p-select 
-                        id="tipo" 
+                        id="tipo"
                         [options]="tipos()" 
                         formControlName="tipoItemId" 
                         optionLabel="nome" 
                         optionValue="id" 
-                        placeholder="Selecione" 
+                        placeholder="Selecione..." 
+                        appendTo="body"
                         class="w-full" />
                 </div>
+                
                 <div class="field col-6">
-                    <label for="preco" class="font-bold">Preço (R$)</label>
+                    <label for="preco" class="font-bold">Preço Unitário</label>
                     <p-inputnumber 
                         id="preco" 
                         formControlName="precoUnitario" 
                         mode="currency" 
                         currency="BRL" 
                         locale="pt-BR" 
+                        placeholder="R$ 0,00"
                         class="w-full" />
                 </div>
             </div>

@@ -12,10 +12,12 @@ import br.com.catdogclinicavet.backend_api.models.enums.AgendamentoStatus;
 import br.com.catdogclinicavet.backend_api.repositories.AgendamentoRepository;
 import br.com.catdogclinicavet.backend_api.repositories.AnimalRepository;
 import br.com.catdogclinicavet.backend_api.repositories.UsuarioRepository;
+import br.com.catdogclinicavet.backend_api.security.AppRoles;
 import br.com.catdogclinicavet.backend_api.security.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,9 @@ public class AgendamentoService {
     @Autowired
     private AgendamentoMapper agendamentoMapper;
 
+    @Autowired
+    private ContaService contaService;
+
     private UserDetailsImpl getAuthenticatedUser() {
         return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
@@ -45,20 +50,46 @@ public class AgendamentoService {
     public AgendamentoResponseDTO create(AgendamentoRequestDTO dto) {
         UserDetailsImpl userDetails = getAuthenticatedUser();
 
-        Usuario cliente = usuarioRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado."));
+        boolean isAdminOrVet = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role ->
+                        role.equals("ROLE_" + AppRoles.FUNCIONARIO) ||
+                                role.equals("ROLE_" + AppRoles.VETERINARIO) ||
+                                role.equals("ROLE_" + AppRoles.ADMIN)
+                );
 
         Animal animal = animalRepository.findById(dto.animalId())
                 .orElseThrow(() -> new ResourceNotFoundException("Animal não encontrado."));
 
-        if (!Objects.equals(animal.getUsuario().getId(), cliente.getId())) {
-            throw new BusinessLogicException("O animal informado não pertence a este usuário.");
+        Usuario cliente;
+
+        if (isAdminOrVet) {
+            cliente = animal.getUsuario();
+        } else {
+            if (!Objects.equals(animal.getUsuario().getId(), userDetails.getId())) {
+                throw new BusinessLogicException("O animal informado não pertence a este usuário.");
+            }
+            cliente = usuarioRepository.findById(userDetails.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado."));
         }
 
         Agendamento agendamento = agendamentoMapper.toEntity(dto);
         agendamento.setCliente(cliente);
         agendamento.setAnimal(animal);
         agendamento.setStatus(AgendamentoStatus.AGENDADO);
+
+        if (dto.funcionarioId() != null) {
+            Usuario veterinario = usuarioRepository.findById(dto.funcionarioId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Veterinário não encontrado."));
+
+            String roleName = veterinario.getRole().getNome().replace(" ", "_");
+            boolean isVet = roleName.equals("MEDICO_VETERINARIO");
+
+            if (!isVet) {
+                throw new BusinessLogicException("O usuário informado não é um Veterinário.");
+            }
+            agendamento.setFuncionario(veterinario);
+        }
 
         Agendamento saved = agendamentoRepository.save(agendamento);
         return agendamentoMapper.toResponseDTO(saved);
@@ -71,23 +102,23 @@ public class AgendamentoService {
     }
 
     public Page<AgendamentoResponseDTO> listAll(Pageable pageable) {
-        return agendamentoRepository.findAll(pageable)
-                .map(agendamentoMapper::toResponseDTO);
-    }
-
-    public AgendamentoResponseDTO findById(Long id) {
-        Agendamento agendamento = agendamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado."));
-
         UserDetailsImpl userDetails = getAuthenticatedUser();
-        boolean isFuncionario = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("FUNCIONARIO") || a.getAuthority().equals("MEDICO VETERINARIO"));
 
-        if (!isFuncionario && !Objects.equals(agendamento.getCliente().getId(), userDetails.getId())) {
-            throw new BusinessLogicException("Acesso negado.");
+        boolean isVeterinario = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_" + AppRoles.VETERINARIO));
+
+        boolean isFuncionario = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_" + AppRoles.FUNCIONARIO) || role.equals("ROLE_" + AppRoles.ADMIN));
+
+        if (isVeterinario && !isFuncionario) {
+            return agendamentoRepository.findByFuncionarioId(userDetails.getId(), pageable)
+                    .map(agendamentoMapper::toResponseDTO);
         }
 
-        return agendamentoMapper.toResponseDTO(agendamento);
+        return agendamentoRepository.findAll(pageable)
+                .map(agendamentoMapper::toResponseDTO);
     }
 
     @Transactional
@@ -127,6 +158,15 @@ public class AgendamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado."));
 
         agendamento.setStatus(AgendamentoStatus.CONCLUIDO);
+
+        contaService.abrirConta(id);
+
         return agendamentoMapper.toResponseDTO(agendamentoRepository.save(agendamento));
+    }
+
+    public AgendamentoResponseDTO findById(Long id) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado."));
+        return agendamentoMapper.toResponseDTO(agendamento);
     }
 }

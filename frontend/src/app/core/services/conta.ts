@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 
@@ -9,6 +9,14 @@ import { Observable } from 'rxjs';
 export class ContaService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/contas`;
+
+  findAll(clienteId?: number): Observable<any[]> {
+    let params = new HttpParams();
+    if (clienteId) {
+        params = params.set('clienteId', clienteId.toString());
+    }
+    return this.http.get<any[]>(`${this.apiUrl}/interno`, { params });
+  }
 
   abrirConta(agendamentoId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/interno/abrir/${agendamentoId}`, {});
@@ -23,7 +31,7 @@ export class ContaService {
   }
 
   fecharConta(contaId: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/interno/${contaId}/fechar`, {});
+      return this.http.post(`${this.apiUrl}/interno/${contaId}/fechar`, {});
   }
 
   findById(id: number): Observable<any> {

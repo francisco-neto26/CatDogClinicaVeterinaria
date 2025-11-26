@@ -11,7 +11,7 @@ export interface LayoutStateModel {
 @State<LayoutStateModel>({
   name: 'layout',
   defaults: {
-    openTabs: [], // Começa vazio (ou poderia ter o Dashboard fixo)
+    openTabs: [],
     activeTabLink: null
   }
 })

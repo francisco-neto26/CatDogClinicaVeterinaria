@@ -1,21 +1,75 @@
+<p-confirmDialog [style]="{width: '450px'}" rejectLabel="Não" acceptLabel="Sim" />
+
 <div class="surface-ground px-4 py-5 min-h-screen">
-    <div class="surface-card p-4 shadow-2 border-round mb-4">
-        <div class="flex align-items-center gap-3">
-            <span class="p-float-label">
-                <p-inputnumber [(ngModel)]="agendamentoIdSearch" inputId="agendamentoId" [useGrouping]="false" />
-                <label for="agendamentoId">ID do Agendamento</label>
-            </span>
-            <p-button label="Buscar / Abrir Conta" icon="pi pi-search" (onClick)="buscarConta()" />
+    
+    <div class="surface-card p-4 shadow-2 border-round mb-4 flex justify-content-between align-items-center">
+        <div class="flex align-items-center gap-3 w-6">
+            <p-inputnumber 
+                [(ngModel)]="agendamentoIdSearch" 
+                inputId="agendamentoId" 
+                [useGrouping]="false" 
+                placeholder="ID Agendamento (Vazio = Todos)" 
+                class="w-full" 
+                styleClass="w-full" />
+                
+            <p-button label="Buscar" icon="pi pi-search" (onClick)="buscarContaPorAgendamento()" />
         </div>
+        
+        <p-button label="Nova Conta (Manual)" icon="pi pi-plus" severity="success" (onClick)="openNewContaDialog()" />
     </div>
+
+    @if (!contaAtual()) {
+        <div class="surface-card p-4 shadow-2 border-round mb-4">
+            <div class="mb-3 text-xl font-bold text-900">
+                {{ preSelectedClientName ? 'Contas de ' + preSelectedClientName : 'Listagem de Contas' }}
+            </div>
+
+            @if (listaContas().length === 0) {
+                <div class="text-center p-4 text-500">
+                    Nenhuma conta encontrada para os critérios informados.
+                </div>
+            } @else {
+                <p-table [value]="listaContas()" [loading]="loading()" styleClass="p-datatable-striped" [paginator]="true" [rows]="10">
+                    <ng-template #header>
+                        <tr>
+                            <th>Conta ID</th>
+                            <th>Agendamento</th>
+                            <th>Emissão</th>
+                            <th>Status</th>
+                            <th>Valor Total</th>
+                            <th>Ação</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-c>
+                        <tr>
+                            <td>{{ c.id }}</td>
+                            <td>#{{ c.agendamentoId }}</td>
+                            <td>{{ c.dataEmissao | date:'dd/MM/yyyy HH:mm' }}</td>
+                            <td>
+                                <p-tag [value]="c.status" [severity]="c.status === 'ABERTA' ? 'success' : 'secondary'" />
+                            </td>
+                            <td class="font-bold">{{ c.valorTotal | currency:'BRL' }}</td>
+                            <td>
+                                <p-button icon="pi pi-eye" [text]="true" (onClick)="selecionarConta(c)" pTooltip="Ver Detalhes" />
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            }
+        </div>
+    }
 
     @if (contaAtual()) {
         <div class="surface-card p-4 shadow-2 border-round">
             <div class="flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="m-0">Conta #{{ contaAtual().id }}</h2>
-                    <div class="mt-2">
+                    <div class="flex align-items-center gap-2">
+                         <p-button icon="pi pi-arrow-left" [text]="true" (onClick)="voltarParaLista()" pTooltip="Voltar para lista" />
+                         <h2 class="m-0">Conta #{{ contaAtual().id }}</h2>
+                    </div>
+                    <div class="mt-2 ml-2">
                         <p-tag [value]="contaAtual().status" [severity]="contaAtual().status === 'ABERTA' ? 'success' : 'secondary'" />
+                        <span class="ml-3 text-500">Agendamento #{{ contaAtual().agendamentoId }}</span>
                         <span class="ml-3 text-500">Cliente ID: {{ contaAtual().clienteId }}</span>
                     </div>
                 </div>
@@ -82,5 +136,44 @@
     </div>
     <ng-template #footer>
         <p-button label="Adicionar" icon="pi pi-plus" (onClick)="adicionarItem()" />
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="dialogNewContaVisible" header="Nova Conta (Manual)" [modal]="true" [style]="{width: '500px'}">
+    <div class="flex flex-column gap-3 pt-2">
+        <label class="font-bold">Selecione o Agendamento</label>
+        <p-select 
+            [options]="listaAgendamentos()" 
+            [(ngModel)]="newContaAgendamentoId" 
+            optionValue="id" 
+            placeholder="Buscar agendamento..." 
+            class="w-full" 
+            appendTo="body"
+            [filter]="true"
+            filterBy="id"
+            [showClear]="true">
+            
+            <ng-template #selectedItem let-selected>
+                <div class="flex align-items-center gap-2" *ngIf="selected">
+                    <span class="font-bold">#{{ selected.id }}</span>
+                    <span>- {{ selected.dataHora | date:'dd/MM HH:mm' }}</span>
+                    <p-tag [value]="selected.status" severity="info" />
+                </div>
+            </ng-template>
+
+            <ng-template let-agendamento #item>
+                <div class="flex align-items-center gap-2">
+                    <span class="font-bold">#{{ agendamento.id }}</span>
+                    <span>- {{ agendamento.dataHora | date:'dd/MM HH:mm' }}</span>
+                    <span>(Animal ID: {{agendamento.animalId}})</span>
+                    <p-tag [value]="agendamento.status" severity="info" />
+                </div>
+            </ng-template>
+        </p-select>
+        <small class="text-500">Selecione um agendamento para iniciar a cobrança.</small>
+    </div>
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="dialogNewContaVisible.set(false)" />
+        <p-button label="Criar Conta" icon="pi pi-check" (onClick)="criarContaManual()" [disabled]="!newContaAgendamentoId" />
     </ng-template>
 </p-dialog>

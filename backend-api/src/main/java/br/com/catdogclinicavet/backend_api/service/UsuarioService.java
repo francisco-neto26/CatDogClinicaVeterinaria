@@ -3,6 +3,7 @@ package br.com.catdogclinicavet.backend_api.service;
 import br.com.catdogclinicavet.backend_api.dto.request.UserCreateRequestDTO;
 import br.com.catdogclinicavet.backend_api.dto.request.UserUpdateRequestDTO;
 import br.com.catdogclinicavet.backend_api.dto.response.UsuarioResponseDTO;
+import br.com.catdogclinicavet.backend_api.exceptions.BusinessLogicException;
 import br.com.catdogclinicavet.backend_api.exceptions.DuplicateResourceException;
 import br.com.catdogclinicavet.backend_api.exceptions.ResourceNotFoundException;
 import br.com.catdogclinicavet.backend_api.mapper.UsuarioMapper;
@@ -44,8 +45,23 @@ public class UsuarioService {
     @Autowired
     private UsuarioMapper usuarioMapper;
 
+    @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> findAll() {
         return usuarioRepository.findAll().stream()
+                .map(usuarioMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioResponseDTO> findVeterinarios() {
+        List<String> nomesPossiveis = List.of(
+                "MEDICO VETERINARIO",
+                "MEDICO_VETERINARIO",
+                "MÉDICO VETERINÁRIO",
+                "VETERINARIO"
+        );
+
+        return usuarioRepository.findByRoleNames(nomesPossiveis).stream()
                 .map(usuarioMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -57,7 +73,7 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioResponseDTO create(br.com.catdogclinicavet.backend_api.dto.request.UserCreateRequestDTO dto) {
+    public UsuarioResponseDTO create(UserCreateRequestDTO dto) {
         if (usuarioRepository.existsByEmail(dto.email())) {
             throw new DuplicateResourceException("Email já está em uso.");
         }
@@ -65,8 +81,9 @@ public class UsuarioService {
             throw new DuplicateResourceException("CPF/CNPJ já está em uso.");
         }
 
-        Role role = roleRepository.findByNome(dto.role().toUpperCase())
-                .orElseThrow(() -> new ResourceNotFoundException("Role não encontrada: " + dto.role()));
+        String roleName = dto.role().toUpperCase().replace("_", " ");
+        Role role = roleRepository.findByNome(roleName)
+                .orElseThrow(() -> new ResourceNotFoundException("Role não encontrada: " + roleName));
 
         Pessoa pessoa = new Pessoa();
         pessoa.setNome(dto.nome());
@@ -91,6 +108,43 @@ public class UsuarioService {
     }
 
     @Transactional
+    public UsuarioResponseDTO updateUser(Long id, UserUpdateRequestDTO dto) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+
+        var pessoa = usuario.getPessoa();
+        pessoa.setNome(dto.nome());
+        pessoa.setTelefone(dto.telefone());
+        pessoa.setLogradouro(dto.logradouro());
+        pessoa.setNumero(dto.numero());
+        pessoa.setBairro(dto.bairro());
+        pessoa.setCidade(dto.cidade());
+        pessoa.setUf(dto.uf());
+        pessoa.setCep(dto.cep());
+
+        if (dto.email() != null && !dto.email().equals(usuario.getEmail())) {
+            if (usuarioRepository.existsByEmail(dto.email())) {
+                throw new DuplicateResourceException("Email já está em uso por outro usuário.");
+            }
+            usuario.setEmail(dto.email());
+        }
+
+        if (dto.role() != null) {
+            String roleName = dto.role().toUpperCase().replace("_", " ");
+            Role role = roleRepository.findByNome(roleName)
+                    .orElseThrow(() -> new ResourceNotFoundException("Role não encontrada: " + roleName));
+            usuario.setRole(role);
+        }
+
+        if (dto.newPassword() != null && !dto.newPassword().isBlank()) {
+            usuario.setSenha(passwordEncoder.encode(dto.newPassword()));
+        }
+
+        usuarioRepository.save(usuario);
+        return usuarioMapper.toResponseDTO(usuario);
+    }
+
+    @Transactional
     public UsuarioResponseDTO updateProfile(UserUpdateRequestDTO dto) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = userDetails.getId();
@@ -111,6 +165,25 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
 
         return usuarioMapper.toResponseDTO(usuario);
+    }
+
+    @Transactional
+    public void changePassword(UserUpdateRequestDTO dto) {
+        if (dto.currentPassword() == null || dto.currentPassword().isBlank() ||
+                dto.newPassword() == null || dto.newPassword().isBlank()) {
+            throw new BusinessLogicException("Senha atual e nova senha são obrigatórias.");
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Usuario usuario = usuarioRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+
+        if (!passwordEncoder.matches(dto.currentPassword(), usuario.getSenha())) {
+            throw new BusinessLogicException("A senha atual está incorreta.");
+        }
+
+        usuario.setSenha(passwordEncoder.encode(dto.newPassword()));
+        usuarioRepository.save(usuario);
     }
 
     @Transactional

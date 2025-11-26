@@ -3,7 +3,7 @@
         <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
             <div>
                 <div class="text-900 font-medium text-3xl">Gerenciar Equipe</div>
-                <div class="text-500 mt-1">Cadastro de Funcionários e Veterinários</div>
+                <div class="text-500 mt-1">Funcionários e Veterinários</div>
             </div>
             <div class="mt-3 md:mt-0">
                 <p-button label="Novo Colaborador" icon="pi pi-user-plus" (onClick)="openNew()" />
@@ -17,6 +17,7 @@
                     <th>Email</th>
                     <th>Perfil</th>
                     <th>Telefone</th>
+                    <th style="width: 100px">Ações</th>
                 </tr>
             </ng-template>
             <ng-template #body let-user>
@@ -36,39 +37,90 @@
                         </span>
                     </td>
                     <td>{{ user.pessoa.telefone }}</td>
+                    <td>
+                        <p-button icon="pi pi-pencil" [text]="true" severity="info" (onClick)="openEdit(user)" />
+                    </td>
                 </tr>
             </ng-template>
         </p-table>
     </div>
 </div>
 
-<p-dialog [(visible)]="dialogVisible" [style]="{width: '600px'}" header="Novo Colaborador" [modal]="true" styleClass="p-fluid">
+<p-dialog [(visible)]="dialogVisible" [style]="{width: '800px'}" [header]="isEditMode() ? 'Editar Colaborador' : 'Novo Colaborador'" [modal]="true" styleClass="p-fluid">
     <ng-template #content>
         <form [formGroup]="form">
             <div class="grid formgrid">
                 <div class="col-12 mb-3">
-                    <label class="font-bold">Nome Completo</label>
-                    <input type="text" pInputText formControlName="nome" />
+                    <label class="font-bold block mb-2">Nome Completo</label>
+                    <input type="text" pInputText formControlName="nome" class="w-full" />
                 </div>
                 
                 <div class="col-12 md:col-6 mb-3">
-                    <label class="font-bold">Email</label>
-                    <input type="email" pInputText formControlName="email" />
+                    <label class="font-bold block mb-2">Email</label>
+                    <input type="email" pInputText formControlName="email" class="w-full" />
                 </div>
 
                 <div class="col-12 md:col-6 mb-3">
-                    <label class="font-bold">Senha</label>
-                    <p-password formControlName="senha" [toggleMask]="true" [feedback]="false" class="w-full" inputClass="w-full" />
+                    <label class="font-bold block mb-2">Perfil de Acesso</label>
+                    <p-select 
+                        [options]="roleOptions()" 
+                        formControlName="role" 
+                        optionLabel="label" 
+                        optionValue="value" 
+                        placeholder="Selecione" 
+                        class="w-full" 
+                        appendTo="body" />
                 </div>
 
                 <div class="col-12 md:col-6 mb-3">
-                    <label class="font-bold">Perfil de Acesso</label>
-                    <p-select [options]="roleOptions" formControlName="role" optionLabel="label" optionValue="value" placeholder="Selecione" class="w-full" />
+                    <label class="font-bold block mb-2">Senha</label>
+                    <p-password 
+                        formControlName="senha" 
+                        [toggleMask]="true" 
+                        [feedback]="false" 
+                        class="w-full" 
+                        inputClass="w-full" 
+                        [placeholder]="isEditMode() ? 'Deixe vazio para manter a atual' : ''" />
                 </div>
 
                 <div class="col-12 md:col-6 mb-3">
-                    <label class="font-bold">CPF</label>
+                    <label class="font-bold block mb-2">CPF</label>
                     <p-inputmask mask="999.999.999-99" formControlName="cpfcnpj" class="w-full" styleClass="w-full" />
+                </div>
+
+                <div class="col-12 md:col-6 mb-3">
+                    <label class="font-bold block mb-2">Telefone</label>
+                    <p-inputmask mask="(99) 99999-9999" formControlName="telefone" class="w-full" styleClass="w-full" />
+                </div>
+
+                <div class="col-12 md:col-6 mb-3">
+                    <label class="font-bold block mb-2">CEP</label>
+                    <p-inputmask mask="99999-999" formControlName="cep" class="w-full" styleClass="w-full" />
+                </div>
+
+                <div class="col-12 md:col-8 mb-3">
+                    <label class="font-bold block mb-2">Logradouro</label>
+                    <input type="text" pInputText formControlName="logradouro" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-4 mb-3">
+                    <label class="font-bold block mb-2">Número</label>
+                    <input type="text" pInputText formControlName="numero" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-5 mb-3">
+                    <label class="font-bold block mb-2">Bairro</label>
+                    <input type="text" pInputText formControlName="bairro" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-5 mb-3">
+                    <label class="font-bold block mb-2">Cidade</label>
+                    <input type="text" pInputText formControlName="cidade" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-2 mb-3">
+                    <label class="font-bold block mb-2">UF</label>
+                    <input type="text" pInputText formControlName="uf" class="w-full uppercase" maxlength="2" />
                 </div>
             </div>
         </form>

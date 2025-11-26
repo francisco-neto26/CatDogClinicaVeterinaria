@@ -1,5 +1,6 @@
 package br.com.catdogclinicavet.backend_api.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
@@ -31,9 +32,11 @@ public class Usuario implements Serializable {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Animal> animais = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "cliente")
     private List<Agendamento> agendamentosComoCliente = new ArrayList<>();
 

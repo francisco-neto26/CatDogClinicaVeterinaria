@@ -1,8 +1,25 @@
 <div class="surface-ground px-4 py-5 md:px-6 lg:px-8 min-h-screen">
     <div class="surface-card p-4 shadow-2 border-round">
-        <div class="mb-4">
-            <div class="text-900 font-medium text-3xl">Clientes</div>
-            <div class="text-500 mt-1">Lista de Tutores cadastrados</div>
+        
+        <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4 gap-3">
+            <div>
+                <div class="text-900 font-medium text-3xl">Clientes</div>
+                <div class="text-500 mt-1">Lista de Tutores cadastrados</div>
+            </div>
+            
+            <div class="flex gap-2 w-full md:w-auto">
+                <p-iconfield iconPosition="left" class="w-full">
+                    <p-inputicon styleClass="pi pi-search" />
+                    <input 
+                        type="text" 
+                        pInputText 
+                        placeholder="Buscar por Nome ou CPF..." 
+                        [(ngModel)]="termoBusca" 
+                        (input)="filtrar()" 
+                        class="w-full md:w-20rem" />
+                </p-iconfield>
+                <p-button label="Novo Cliente" icon="pi pi-user-plus" (onClick)="openNew()" />
+            </div>
         </div>
 
         <p-table [value]="clientes()" [loading]="loading()" responsiveLayout="scroll" styleClass="p-datatable-striped">
@@ -12,7 +29,7 @@
                     <th>Email</th>
                     <th>Telefone</th>
                     <th>CPF/CNPJ</th>
-                    <th style="width: 100px">Ações</th>
+                    <th style="width: 180px" class="text-center">Ações</th>
                 </tr>
             </ng-template>
             <ng-template #body let-user>
@@ -30,8 +47,12 @@
                     <td>{{ user.email }}</td>
                     <td>{{ user.pessoa.telefone }}</td>
                     <td>{{ user.pessoa.cpfcnpj }}</td>
-                    <td>
-                         <p-button icon="pi pi-eye" [text]="true" severity="info" pTooltip="Ver Detalhes (Em breve)" />
+                    <td class="text-center">
+                         <div class="flex justify-content-center gap-2">
+                            <p-button icon="pi pi-calendar-plus" [text]="true" severity="info" pTooltip="Agendar" tooltipPosition="top" (onClick)="criarAgendamento(user)" />
+                            <p-button icon="pi pi-receipt" [text]="true" severity="warn" pTooltip="Contas" tooltipPosition="top" (onClick)="verContas(user)" />
+                            <p-button icon="pi pi-wallet" [text]="true" severity="success" pTooltip="Financeiro" tooltipPosition="top" (onClick)="verTitulos(user)" />
+                         </div>
                     </td>
                 </tr>
             </ng-template>
@@ -43,3 +64,75 @@
         </p-table>
     </div>
 </div>
+
+<p-dialog [(visible)]="dialogVisible" [style]="{width: '800px'}" header="Novo Cliente" [modal]="true" styleClass="p-fluid">
+    <ng-template #content>
+        <form [formGroup]="form">
+            <div class="grid formgrid">
+                <div class="col-12 mb-3">
+                    <label class="font-bold">Nome Completo</label>
+                    <input type="text" pInputText formControlName="nome" />
+                </div>
+                
+                <div class="col-12 md:col-6 mb-3">
+                    <label class="font-bold">Email (Login)</label>
+                    <input type="email" pInputText formControlName="email" />
+                </div>
+
+                <div class="col-12 md:col-6 mb-3">
+                    <label class="font-bold">Senha Provisória</label>
+                    <p-password formControlName="senha" [toggleMask]="true" [feedback]="false" class="w-full" inputClass="w-full" />
+                </div>
+
+                <div class="col-12 md:col-6 mb-3">
+                    <label class="font-bold">CPF</label>
+                    <p-inputmask mask="999.999.999-99" formControlName="cpfcnpj" class="w-full" styleClass="w-full" />
+                </div>
+
+                <div class="col-12 md:col-6 mb-3">
+                    <label class="font-bold">Telefone</label>
+                    <p-inputmask mask="(99) 99999-9999" formControlName="telefone" class="w-full" styleClass="w-full" />
+                </div>
+
+                <div class="col-12">
+                    <div class="text-900 text-xl font-medium mb-3 mt-2 border-bottom-1 surface-border pb-2">Endereço</div>
+                </div>
+
+                <div class="col-12 md:col-4 mb-3">
+                    <label class="font-bold">CEP</label>
+                    <p-inputmask mask="99999-999" formControlName="cep" class="w-full" styleClass="w-full" />
+                </div>
+
+                <div class="col-12 md:col-8 mb-3">
+                    <label class="font-bold">Logradouro</label>
+                    <input type="text" pInputText formControlName="logradouro" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-4 mb-3">
+                    <label class="font-bold">Número</label>
+                    <input type="text" pInputText formControlName="numero" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-8 mb-3">
+                    <label class="font-bold">Bairro</label>
+                    <input type="text" pInputText formControlName="bairro" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-8 mb-3">
+                    <label class="font-bold">Cidade</label>
+                    <input type="text" pInputText formControlName="cidade" class="w-full" />
+                </div>
+
+                <div class="col-12 md:col-4 mb-3">
+                    <label class="font-bold">UF</label>
+                    <input type="text" pInputText formControlName="uf" class="w-full uppercase" maxlength="2" />
+                </div>
+            </div>
+        </form>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="dialogVisible.set(false)" />
+        <p-button label="Salvar" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    </ng-template>
+</p-dialog>

@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    // Lê o valor "vet.registration.queue" do seu application.properties
     @Value("${app.rabbitmq.queue.registration}")
     private String registrationQueue;
 

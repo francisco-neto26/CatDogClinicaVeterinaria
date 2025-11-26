@@ -1,5 +1,6 @@
 package br.com.catdogclinicavet.backend_api.dto.response;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 public record AnimalResponseDTO(
@@ -12,4 +13,4 @@ public record AnimalResponseDTO(
         String corPelagem,
         String fotoUrl,
         Long usuarioId
-) {}
+) implements Serializable {}

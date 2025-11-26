@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, inject, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Store } from '@ngxs/store';
@@ -11,7 +11,6 @@ import { CloseTab, TabInfo } from '../../../store/layout/layout.actions';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TooltipModule } from 'primeng/tooltip';
 import { UserService } from '../../../core/services/user';
-
 
 @Component({
   selector: 'app-navbar',
@@ -60,6 +59,15 @@ export class NavbarComponent implements OnInit {
         console.error(e);
       }
     }
+  }
+
+  getRoleLabel(): string {
+      switch (this.userRole) {
+          case 'ROLE_FUNCIONARIO': return 'Administrador';
+          case 'ROLE_MEDICO_VETERINARIO': return 'Veterinário';
+          case 'ROLE_CLIENTE': return 'Cliente';
+          default: return 'Usuário';
+      }
   }
 
   onToggleSidebar() {

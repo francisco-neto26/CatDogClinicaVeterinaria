@@ -13,7 +13,6 @@ import { InputMaskModule } from 'primeng/inputmask';
 import { ToastModule } from 'primeng/toast';
 import { AvatarModule } from 'primeng/avatar';
 import { UserService } from '../../../core/services/user';
-import { AuthService } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-usuario-list',
@@ -36,7 +35,6 @@ import { AuthService } from '../../../core/services/auth';
 })
 export class UsuarioListComponent implements OnInit {
   private userService = inject(UserService);
-  private authService = inject(AuthService);
   private messageService = inject(MessageService);
   private fb = inject(FormBuilder);
 
@@ -44,20 +42,25 @@ export class UsuarioListComponent implements OnInit {
   loading = signal(true);
   dialogVisible = signal(false);
   saving = signal(false);
+  isEditMode = signal(false);
 
-  form: FormGroup;
+  roleOptions = signal<any[]>([]);
 
-  roleOptions = [
+  private readonly ALL_ROLES = [
     { label: 'Funcionário (Admin)', value: 'FUNCIONARIO' },
-    { label: 'Médico Veterinário', value: 'MEDICO_VETERINARIO' }
+    { label: 'Médico Veterinário', value: 'MEDICO_VETERINARIO' },
+    { label: 'Cliente', value: 'CLIENTE' }
   ];
+  
+  form: FormGroup;
 
   constructor() {
     this.form = this.fb.group({
+      id: [null],
       nome: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      senha: ['', [Validators.required, Validators.minLength(6)]],
-      role: [null, Validators.required],
+      senha: [''], 
+      role: [null, Validators.required], 
       telefone: [''],
       cpfcnpj: [''],
       cep: [''],
@@ -89,6 +92,51 @@ export class UsuarioListComponent implements OnInit {
 
   openNew() {
     this.form.reset();
+    this.isEditMode.set(false);
+
+    this.roleOptions.set(this.ALL_ROLES.filter(r => r.value !== 'CLIENTE'));
+    
+    this.form.get('senha')?.setValidators([Validators.required, Validators.minLength(6)]);
+    this.form.get('email')?.enable();
+    this.form.get('role')?.enable(); 
+    
+    this.dialogVisible.set(true);
+  }
+
+  openEdit(user: any) {
+    this.form.reset();
+    this.isEditMode.set(true);
+    
+    this.roleOptions.set(this.ALL_ROLES);
+
+    this.form.get('role')?.enable();
+    this.form.get('email')?.enable();
+
+    let roleValue = user.role.nome;
+    if (roleValue === 'MEDICO VETERINARIO') roleValue = 'MEDICO_VETERINARIO';
+    if (roleValue === 'MÉDICO VETERINÁRIO') roleValue = 'MEDICO_VETERINARIO';
+
+    this.form.patchValue({
+        id: user.id,
+        nome: user.pessoa.nome,
+        email: user.email,
+        telefone: user.pessoa.telefone,
+        cpfcnpj: user.pessoa.cpfcnpj,
+        cep: user.pessoa.cep,
+        logradouro: user.pessoa.logradouro,
+        numero: user.pessoa.numero,
+        bairro: user.pessoa.bairro,
+        cidade: user.pessoa.cidade,
+        uf: user.pessoa.uf,
+        role: roleValue 
+    });
+
+    this.form.get('senha')?.clearValidators();
+    this.form.get('senha')?.updateValueAndValidity();
+
+    this.form.get('email')?.disable(); 
+    this.form.get('role')?.disable(); 
+
     this.dialogVisible.set(true);
   }
 
@@ -96,23 +144,46 @@ export class UsuarioListComponent implements OnInit {
     if (this.form.invalid) return;
 
     this.saving.set(true);
-    const data = this.form.value;
 
+    const data = this.form.getRawValue();
+    
     if (data.cpfcnpj) data.cpfcnpj = data.cpfcnpj.replace(/\D/g, '');
     if (data.cep) data.cep = data.cep.replace(/\D/g, '');
     if (data.telefone) data.telefone = data.telefone.replace(/\D/g, '');
 
-    this.authService.registerEmployee(data).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.dialogVisible.set(false);
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário criado' });
-        this.loadUsuarios();
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao criar usuário.' });
-      }
-    });
+    if (this.isEditMode()) {
+
+        const updateData = {
+            ...data,
+            newPassword: data.senha 
+        };
+
+        this.userService.update(data.id, updateData).subscribe({
+            next: () => {
+                this.saving.set(false);
+                this.dialogVisible.set(false);
+                this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário atualizado' });
+                this.loadUsuarios();
+            },
+            error: () => {
+                this.saving.set(false);
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao atualizar.' });
+            }
+        });
+    } else {
+        this.userService.create(data).subscribe({
+            next: () => {
+                this.saving.set(false);
+                this.dialogVisible.set(false);
+                this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário criado' });
+                this.loadUsuarios();
+            },
+            error: (err) => {
+                this.saving.set(false);
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao criar usuário.' });
+                console.error(err);
+            }
+        });
+    }
   }
 }

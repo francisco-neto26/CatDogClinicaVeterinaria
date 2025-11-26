@@ -1,22 +1,25 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+
 import { MessageService, ConfirmationService } from 'primeng/api';
+import { Store } from '@ngxs/store';
+import { AuthState } from '../../../store/auth/auth.state';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { DatePickerModule } from 'primeng/datepicker';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AvatarModule } from 'primeng/avatar';
 import { TagModule } from 'primeng/tag';
 import { InputMaskModule } from 'primeng/inputmask';
-
-import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
 import { AnimalService } from '../../../core/services/animal';
+import { UserService } from '../../../core/services/user';
 
 @Component({
   selector: 'app-animal-list',
@@ -28,32 +31,35 @@ import { AnimalService } from '../../../core/services/animal';
     ButtonModule,
     DialogModule,
     InputTextModule,
+    SelectModule,
+    DatePickerModule,
     FileUploadModule,
     ToastModule,
     ConfirmDialogModule,
     AvatarModule,
     TagModule,
-    InputMaskModule,
-    // --- Novos Imports ---
-    SelectModule,
-    DatePickerModule
+    InputMaskModule
   ],
   providers: [ConfirmationService],
   templateUrl: './animal-list.html',
   styleUrls: ['./animal-list.scss']
 })
 export class AnimalListComponent implements OnInit {
-  // ... (O restante da classe permanece IDÊNTICO, a lógica não muda)
   private animalService = inject(AnimalService);
+  private userService = inject(UserService); 
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private fb = inject(FormBuilder);
+  private store = inject(Store);
 
   animais = signal<any[]>([]);
+  clientes = signal<any[]>([]);
   totalRecords = signal(0);
   loading = signal(true);
   dialogVisible = signal(false);
   saving = signal(false);
+  
+  isAdminOrVet = signal(false);
   
   animalForm: FormGroup;
   selectedFile: File | null = null;
@@ -71,17 +77,40 @@ export class AnimalListComponent implements OnInit {
       raca: [''],
       sexo: ['', Validators.required],
       corPelagem: [''],
-      dataNascimento: [null]
+      dataNascimento: [null],
+      clienteId: [null] 
     });
   }
 
   ngOnInit() {
+    this.checkRole();
     this.loadAnimais();
+    
+    if (this.isAdminOrVet()) {
+        this.loadClientes();
+    }
+  }
+
+  checkRole() {
+    const token = this.store.selectSnapshot(AuthState.token);
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const role = payload.role;
+            this.isAdminOrVet.set(role === 'ROLE_FUNCIONARIO' || role === 'ROLE_MEDICO_VETERINARIO');
+        } catch (e) { console.error(e); }
+    }
+  }
+
+  loadClientes() {
+    this.userService.findAll().subscribe(users => {
+        const listaClientes = users.filter((u: any) => u.role.nome === 'CLIENTE');
+        this.clientes.set(listaClientes);
+    });
   }
 
   loadAnimais(event?: any) {
     this.loading.set(true);
-    // Se o evento for undefined (primeira carga), usa padrão 0 e 10
     const page = event ? event.first / event.rows : 0;
     const size = event ? event.rows : 10;
 
@@ -93,7 +122,7 @@ export class AnimalListComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar os animais.' });
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar animais.' });
       }
     });
   }
@@ -112,7 +141,8 @@ export class AnimalListComponent implements OnInit {
 
     this.animalForm.patchValue({
       ...animal,
-      dataNascimento: dataNasc
+      dataNascimento: dataNasc,
+      clienteId: animal.usuarioId 
     });
     this.selectedFile = null;
     this.dialogVisible.set(true);
@@ -136,7 +166,6 @@ export class AnimalListComponent implements OnInit {
   }
 
   onFileSelect(event: any) {
-    // Ajuste para pegar o arquivo corretamente dependendo do modo do componente
     const file = event.files ? event.files[0] : (event.currentFiles ? event.currentFiles[0] : null);
     this.selectedFile = file;
   }

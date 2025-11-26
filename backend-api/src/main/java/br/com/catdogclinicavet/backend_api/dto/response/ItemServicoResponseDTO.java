@@ -1,5 +1,6 @@
 package br.com.catdogclinicavet.backend_api.dto.response;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 public record ItemServicoResponseDTO(
@@ -7,4 +8,4 @@ public record ItemServicoResponseDTO(
         String descricao,
         BigDecimal precoUnitario,
         Long tipoItemId
-) {}
+) implements Serializable {}
