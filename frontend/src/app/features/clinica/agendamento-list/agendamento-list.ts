@@ -52,6 +52,7 @@ export class AgendamentoListComponent implements OnInit {
   private fb = inject(FormBuilder);
   private store = inject(Store);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   agendamentos = signal<any[]>([]);
   allAgendamentos: any[] = []; 
@@ -98,8 +99,19 @@ export class AgendamentoListComponent implements OnInit {
             this.filterAnimais(0);
         }
     });
+    
+    if (this.router.url.includes('novo-agendamento')) {
+        this.openNew();
+    }
 
     this.loadAgendamentos();
+  }
+
+  getPageTitle(): string {
+      if (this.preSelectedClientName) return `Agenda de ${this.preSelectedClientName}`;
+      if (this.router.url.includes('meus-agendamentos')) return 'Histórico de Consultas';
+      if (this.router.url.includes('novo-agendamento')) return 'Agendar Consulta';
+      return 'Gestão de Agenda';
   }
 
   checkRole() {
@@ -109,7 +121,7 @@ export class AgendamentoListComponent implements OnInit {
             const payload = JSON.parse(atob(token.split('.')[1]));
             const role = payload.role;
             this.isCliente.set(role === 'ROLE_CLIENTE');
-            this.isAdmin.set(role === 'ROLE_FUNCIONARIO');
+            this.isAdmin.set(role === 'ROLE_FUNCIONARIO' || role === 'ROLE_ADMINISTRADOR');
             this.isVet.set(role === 'ROLE_MEDICO_VETERINARIO');
         } catch (e) { console.error(e); }
     }
@@ -124,19 +136,30 @@ export class AgendamentoListComponent implements OnInit {
   }
 
   loadInitialData() {
-       this.userService.findVeterinarios().subscribe(vets => {
-        const veterinariosFiltered = vets.filter((vet: any) => vet.role?.nome === 'MEDICO VETERINARIO');
-        this.veterinarios.set(veterinariosFiltered);
+    this.userService.findVeterinarios().subscribe({
+        next: (users) => {
+            const apenasVets = users.filter((u: any) => 
+                u.role.nome.toUpperCase().includes('VETERINARIO')
+            );
+            this.veterinarios.set(apenasVets);
+        },
+        error: (err) => console.error('Erro ao carregar veterinários', err)
     });
 
     if (this.isAdminOrVet()) {
-        this.animalService.findAll(0, 1000).subscribe(data => {
-            this.allAnimais.set(data.content);
-            this.meusAnimais.set(data.content); 
+        this.animalService.findAll(0, 1000).subscribe({
+            next: (data) => {
+                this.allAnimais.set(data.content);
+                this.meusAnimais.set(data.content); 
+            },
+            error: (err) => console.error('Erro ao carregar animais', err)
         });
     } else {
-        this.animalService.findAll(0, 100).subscribe(data => {
-            this.meusAnimais.set(data.content);
+        this.animalService.findAll(0, 100).subscribe({
+            next: (data) => {
+                this.meusAnimais.set(data.content);
+            },
+            error: (err) => console.error('Erro ao carregar meus animais', err)
         });
     }
   }
@@ -150,8 +173,8 @@ export class AgendamentoListComponent implements OnInit {
 
   loadAgendamentos() {
     this.loading.set(true);
+    
     let request$;
-
     if (this.isAdminOrVet()) {
         request$ = this.agendamentoService.listAll();
     } else {
@@ -164,9 +187,10 @@ export class AgendamentoListComponent implements OnInit {
         this.applyFilter();
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar agenda.' });
+        console.warn(err); 
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar a agenda.' });
       }
     });
   }
@@ -187,6 +211,10 @@ export class AgendamentoListComponent implements OnInit {
       if(this.isAdminOrVet()) {
           this.meusAnimais.set(this.allAnimais());
       }
+      this.router.navigate([], {
+          queryParams: { 'clienteId': null, 'clienteNome': null },
+          queryParamsHandling: 'merge'
+      });
   }
 
   openNew() {
@@ -199,16 +227,29 @@ export class AgendamentoListComponent implements OnInit {
     this.saving.set(true);
     const data = this.form.value;
     
+    if (data.dataHora instanceof Date) {
+        const date = data.dataHora;
+        const offset = date.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(date.getTime() - offset)).toISOString().slice(0, -1);
+        data.dataHora = localISOTime;
+    }
+    
     this.agendamentoService.create(data).subscribe({
         next: () => {
             this.saving.set(false);
             this.dialogVisible.set(false);
             this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Agendamento criado!' });
             this.loadAgendamentos();
+            
+            if (this.router.url.includes('novo-agendamento')) {
+                this.router.navigate(['/meus-agendamentos']);
+            }
         },
-        error: () => {
+        error: (err) => {
             this.saving.set(false);
-            this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao agendar.' });
+            console.error(err);
+            const msg = err.error?.errors?.dataHora || 'Falha ao agendar. Verifique os dados.';
+            this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
         }
     });
   }

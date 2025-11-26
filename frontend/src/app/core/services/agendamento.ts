@@ -11,7 +11,7 @@ export class AgendamentoService {
   private apiUrl = `${environment.apiUrl}/agendamentos`;
 
   create(data: any): Observable<any> {
-    return this.http.post(this.apiUrl, data);
+    return this.http.post(`${this.apiUrl}`, data);
   }
 
   listMine(page: number = 0, size: number = 10): Observable<any> {
@@ -22,16 +22,16 @@ export class AgendamentoService {
     return this.http.get<any>(`${this.apiUrl}/cliente`, { params });
   }
 
-  cancel(id: number): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/cliente/${id}/cancelar`, {});
-  }
-
   listAll(page: number = 0, size: number = 10): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', 'dataHora,desc');
     return this.http.get<any>(`${this.apiUrl}/interno`, { params });
+  }
+
+  cancel(id: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/cliente/${id}/cancelar`, {});
   }
 
   assignVeterinarian(agendamentoId: number, funcionarioId: number): Observable<any> {

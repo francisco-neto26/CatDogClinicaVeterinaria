@@ -17,6 +17,7 @@
                 @if(preSelectedClientId) {
                     <p-button label="Todos os Agendamentos" icon="pi pi-filter-slash" severity="secondary" (onClick)="limparFiltro()" />
                 }
+                
                 <p-button label="Nova Consulta" icon="pi pi-plus" (onClick)="openNew()" />
             </div>
         </div>
@@ -100,8 +101,9 @@
                     placeholder="Definir agora ou depois" 
                     appendTo="body"
                     class="w-full" />
+                
                 @if(isCliente()) {
-                    <small class="text-500 block mt-1">Sugira um veterinário de sua preferência.</small>
+                    <small class="text-500 block mt-1">Caso tenha preferência, selecione um profissional.</small>
                 }
             </div>
 

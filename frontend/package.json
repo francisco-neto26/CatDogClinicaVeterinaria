@@ -34,6 +34,7 @@
     "@ngxs/logger-plugin": "^20.1.0",
     "@ngxs/store": "^20.1.0",
     "@primeuix/themes": "^1.2.5",
+    "chart.js": "^4.5.1",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primeng": "^20.3.0",
