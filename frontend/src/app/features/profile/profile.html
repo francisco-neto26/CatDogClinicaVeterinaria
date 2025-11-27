@@ -1,0 +1,151 @@
+<div class="surface-ground min-h-screen w-full p-5">
+    <div class="grid justify-content-center">
+        <div class="col-12 md:col-8 lg:col-6">
+            <p-card header="Meu Perfil" styleClass="shadow-4 surface-card">
+                
+                <div class="flex flex-column align-items-center mb-5">
+                    <div class="relative">
+                        <p-avatar 
+                            [image]="currentPhotoUrl || ''" 
+                            [icon]="!currentPhotoUrl ? 'pi pi-user' : ''" 
+                            size="xlarge" 
+                            shape="circle" 
+                            [style]="{'width':'120px', 'height':'120px', 'font-size': '3rem'}"
+                            class="mb-3 surface-200 shadow-2">
+                        </p-avatar>
+                        
+                        <button 
+                            type="button" 
+                            class="absolute bottom-0 right-0 p-button-rounded p-button-icon-only bg-blue-500 border-none text-white shadow-2 cursor-pointer flex align-items-center justify-content-center" 
+                            style="bottom: 5px; right: 5px; width: 2.5rem; height: 2.5rem;"
+                            pTooltip="Alterar Foto"
+                            (click)="fileInput.click()">
+                            <i class="pi pi-camera text-lg"></i>
+                        </button>
+                        <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)" accept="image/*">
+                    </div>
+                    <span class="text-500 text-sm mt-2">Formatos: JPG, PNG (Max 20MB)</span>
+                </div>
+
+                <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+                    <div class="grid formgrid">
+                        <div class="col-12 mb-3">
+                            <label class="font-bold block mb-2 text-900">Nome Completo</label>
+                            <input pInputText formControlName="nome" class="w-full" />
+                        </div>
+                        
+                        <div class="col-12 md:col-6 mb-3">
+                            <label class="font-bold block mb-2 text-900">E-mail</label>
+                            <input pInputText formControlName="email" class="w-full surface-100" />
+                        </div>
+
+                        <div class="col-12 md:col-6 mb-3">
+                            <label class="font-bold block mb-2 text-900">Telefone</label>
+                            <p-inputmask mask="(99) 99999-9999" formControlName="telefone" class="w-full" styleClass="w-full" />
+                        </div>
+
+                        <div class="col-12">
+                            <div class="text-900 text-xl font-medium mb-3 mt-2 border-bottom-1 surface-border pb-2">Endereço</div>
+                        </div>
+
+                        <div class="col-12 md:col-4 mb-3">
+                            <label class="font-bold block mb-2 text-900">CEP</label>
+                            <p-inputmask mask="99999-999" formControlName="cep" class="w-full" styleClass="w-full" />
+                        </div>
+
+                        <div class="col-12 md:col-8 mb-3">
+                            <label class="font-bold block mb-2 text-900">Logradouro</label>
+                            <input pInputText formControlName="logradouro" class="w-full" />
+                        </div>
+
+                        <div class="col-12 md:col-4 mb-3">
+                            <label class="font-bold block mb-2 text-900">Número</label>
+                            <input pInputText formControlName="numero" class="w-full" />
+                        </div>
+
+                        <div class="col-12 md:col-8 mb-3">
+                            <label class="font-bold block mb-2 text-900">Bairro</label>
+                            <input pInputText formControlName="bairro" class="w-full" />
+                        </div>
+
+                        <div class="col-12 md:col-8 mb-3">
+                            <label class="font-bold block mb-2 text-900">Cidade</label>
+                            <input pInputText formControlName="cidade" class="w-full" />
+                        </div>
+
+                        <div class="col-12 md:col-4 mb-3">
+                            <label class="font-bold block mb-2 text-900">UF</label>
+                            <input pInputText formControlName="uf" class="w-full uppercase" maxlength="2" />
+                        </div>
+                    </div>
+
+                    <div class="flex justify-content-between mt-4 pt-3 border-top-1 surface-border">
+                        <p-button 
+                            label="Alterar Senha" 
+                            icon="pi pi-lock" 
+                            severity="secondary" 
+                            [outlined]="true" 
+                            (onClick)="openPasswordDialog()" />
+
+                        <p-button 
+                            label="Salvar Alterações" 
+                            icon="pi pi-check" 
+                            type="submit" 
+                            [loading]="loading"
+                            [disabled]="profileForm.invalid" />
+                    </div>
+                </form>
+            </p-card>
+        </div>
+    </div>
+</div>
+
+<p-dialog 
+    [(visible)]="passwordDialogVisible" 
+    [style]="{width: '400px'}" 
+    header="Alterar Senha" 
+    [modal]="true" 
+    styleClass="p-fluid">
+    
+    <ng-template #content>
+        <form [formGroup]="passwordForm">
+            <div class="field mb-3">
+                <label class="font-bold block mb-2">Senha Atual</label>
+                <p-password 
+                    formControlName="currentPassword" 
+                    [feedback]="false" 
+                    [toggleMask]="true" 
+                    class="w-full" 
+                    inputClass="w-full" />
+            </div>
+
+            <div class="field mb-3">
+                <label class="font-bold block mb-2">Nova Senha</label>
+                <p-password 
+                    formControlName="newPassword" 
+                    [toggleMask]="true" 
+                    class="w-full" 
+                    inputClass="w-full" 
+                    promptLabel="Digite a nova senha" 
+                    weakLabel="Fraca" 
+                    mediumLabel="Média" 
+                    strongLabel="Forte" />
+            </div>
+
+            <div class="field mb-3">
+                <label class="font-bold block mb-2">Confirmar Nova Senha</label>
+                <p-password 
+                    formControlName="confirmPassword" 
+                    [feedback]="false" 
+                    [toggleMask]="true" 
+                    class="w-full" 
+                    inputClass="w-full" />
+            </div>
+        </form>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="passwordDialogVisible = false" />
+        <p-button label="Confirmar" icon="pi pi-check" [loading]="passwordLoading" (onClick)="onChangePassword()" />
+    </ng-template>
+</p-dialog>

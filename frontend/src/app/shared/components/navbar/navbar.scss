@@ -1,0 +1,61 @@
+.top-navbar {
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    background-color: #18181b !important; // Fundo escuro
+    border-bottom: 1px solid #27272a;
+    color: #ffffff;
+}
+
+// Container das abas
+.tabs-container {
+    overflow-x: auto; // Scroll horizontal se tiver muitas abas
+    overflow-y: hidden;
+    white-space: nowrap;
+    
+    // Esconde a barra de rolagem padrão para ficar mais limpo
+    scrollbar-width: thin; 
+    &::-webkit-scrollbar {
+        height: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #3f3f46;
+        border-radius: 4px;
+    }
+}
+
+// Estilo da Aba individual
+.nav-tab {
+    background-color: rgba(255, 255, 255, 0.03);
+    color: #a1a1aa;
+    border: 1px solid transparent;
+    min-width: fit-content; // Garante que o texto não quebre
+    user-select: none;
+
+    &:hover {
+        background-color: #27272a;
+        color: #e4e4e7;
+    }
+
+    &.active-tab {
+        background-color: #27272a;
+        color: var(--primary-color); // Azul do tema
+        border-color: #3f3f46;
+        border-bottom: 2px solid var(--primary-color);
+
+        .close-icon {
+            color: #e4e4e7;
+        }
+    }
+
+    .close-icon {
+        opacity: 0.6;
+        transition: all 0.2s;
+        &:hover {
+            opacity: 1;
+            background-color: rgba(239, 68, 68, 0.2); // Fundo vermelho claro
+            color: #ef4444; // Ícone vermelho
+        }
+    }
+}

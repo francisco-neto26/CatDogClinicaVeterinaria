@@ -1,0 +1,17 @@
+
+
+.main-layout {
+    display: flex;
+    min-height: calc(100vh - 60px);
+    transition: margin-left 0.3s ease-in-out;
+}
+
+.content-area {
+    flex-grow: 1;
+    margin-left: 250px; 
+    transition: margin-left 0.3s ease-in-out;
+}
+
+.main-layout.sidebar-hidden .content-area {
+    margin-left: 0;
+}

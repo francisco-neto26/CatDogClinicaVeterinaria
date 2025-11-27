@@ -1,0 +1,62 @@
+<nav class="top-navbar surface-overlay shadow-2 flex align-items-center justify-content-between px-3">
+    
+    <div class="left-section flex align-items-center flex-shrink-0 mr-3">
+        <p-button 
+            icon="pi pi-bars" 
+            [text]="true" 
+            severity="secondary" 
+            styleClass="text-white"
+            (onClick)="onToggleSidebar()" 
+            class="mr-2" />
+
+        <div class="flex align-items-center cursor-pointer" routerLink="/">
+            <i class="pi pi-th-large text-blue-500 text-2xl mr-2"></i>
+            <span class="font-bold text-xl text-white hidden sm:inline">CatDog</span>
+        </div>
+    </div>
+
+    <div class="tabs-container flex-grow-1 flex align-items-center gap-2 mx-2">
+        @for (tab of openTabs(); track tab.routerLink) {
+            <div 
+                class="nav-tab flex align-items-center p-2 cursor-pointer border-round transition-duration-200"
+                [class.active-tab]="isActive(tab.routerLink)"
+                [routerLink]="tab.routerLink">
+                
+                <i [class]="tab.icon + ' mr-2 text-sm'"></i>
+                <span class="text-sm font-medium mr-2 white-space-nowrap">{{ tab.label }}</span>
+                
+                <span 
+                    class="close-icon pi pi-times text-xs p-1 border-circle"
+                    (click)="closeTab($event, tab)">
+                </span>
+            </div>
+        }
+    </div>
+
+    <div class="right-section flex align-items-center gap-3 flex-shrink-0 ml-3">
+        <div class="user-info flex align-items-center gap-2">
+            <div class="text-right hidden md:block">
+                <div class="text-white font-medium text-sm">{{ userName }}</div>
+                <div class="text-400 text-xs">{{ getRoleLabel() }}</div>
+            </div>
+
+            <p-avatar 
+                [image]="userPhoto() || ''"
+                [icon]="userPhoto() ? '' : 'pi pi-user'" 
+                shape="circle"
+                class="cursor-pointer hover:brightness-110 transition-duration-200"
+                pTooltip="Meu Perfil"
+                tooltipPosition="bottom"
+                routerLink="/perfil" 
+                [style]="{'background-color':'#3B82F6', 'color': '#ffffff'}" />
+        </div>
+        
+        <p-button 
+            icon="pi pi-power-off" 
+            [text]="true" 
+            severity="danger" 
+            pTooltip="Sair"
+            tooltipPosition="bottom"
+            (onClick)="logout()" />
+    </div>
+</nav>
